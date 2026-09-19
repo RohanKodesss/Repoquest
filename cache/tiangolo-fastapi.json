@@ -153,6 +153,111 @@
     }
   },
   "keys": {},
-  "narration": null,
-  "quiz": null
+  "narration": {
+    "rooms": {
+      "readme-hall": "You are in the entrance hall. Look around — exits lead onward.",
+      "room-docs-en-docs": "You are in docs/en/docs. Look around — exits lead onward.",
+      "room-docs-hi-docs": "You are in docs/hi/docs. Look around — exits lead onward.",
+      "room-docs-ja-docs": "You are in docs/ja/docs. Look around — exits lead onward.",
+      "room-docs-ko-docs": "You are in docs/ko/docs. Look around — exits lead onward.",
+      "room-docs-pt-docs": "You are in docs/pt/docs. Look around — exits lead onward.",
+      "room-docs-ru-docs": "You are in docs/ru/docs. Look around — exits lead onward.",
+      "room-docs-tr-docs": "You are in docs/tr/docs. Look around — exits lead onward.",
+      "room-docs-uk-docs": "You are in docs/uk/docs. Look around — exits lead onward.",
+      "room-docs-zh-hant-docs": "You are in docs/zh-hant/docs. Look around — exits lead onward.",
+      "room-docs-zh-docs": "You are in docs/zh/docs. Look around — exits lead onward.",
+      "room-tests": "You are in tests. Look around — exits lead onward."
+    },
+    "monsters": {
+      "guardian-1": "A creature blocks the way: Guardian of uv.lock.",
+      "guardian-2": "A creature blocks the way: Guardian of docs/en/docs/release-notes.md.",
+      "guardian-3": "A creature blocks the way: Guardian of docs/en/docs/img/deployment/https/https.drawio.svg.",
+      "guardian-4": "A creature blocks the way: Guardian of docs/en/docs/img/deployment/https/https06.drawio.svg."
+    },
+    "keys": {}
+  },
+  "quiz": {
+    "monsters": {
+      "guardian-1": {
+        "question": "Which room holds `README.md`?",
+        "options": [
+          "room-docs-pt-docs",
+          "readme-hall",
+          "room-docs-en-docs",
+          "room-docs-ja-docs"
+        ],
+        "answer": "readme-hall",
+        "file": "README.md"
+      },
+      "guardian-2": {
+        "question": "Which room holds `docs/en/docs/__init__.py`?",
+        "options": [
+          "room-docs-zh-hant-docs",
+          "room-docs-tr-docs",
+          "room-docs-zh-docs",
+          "room-docs-en-docs"
+        ],
+        "answer": "room-docs-en-docs",
+        "file": "docs/en/docs/__init__.py"
+      },
+      "guardian-3": {
+        "question": "Which room holds `app.py`?",
+        "options": [
+          "room-docs-uk-docs",
+          "room-docs-pt-docs",
+          "readme-hall",
+          "room-docs-tr-docs"
+        ],
+        "answer": "readme-hall",
+        "file": "app.py"
+      },
+      "guardian-4": {
+        "question": "Which room holds `requirements.txt`?",
+        "options": [
+          "room-docs-en-docs",
+          "readme-hall",
+          "room-docs-tr-docs",
+          "room-docs-hi-docs"
+        ],
+        "answer": "readme-hall",
+        "file": "requirements.txt"
+      }
+    },
+    "boss": [
+      {
+        "question": "Which room holds `setup.py`?",
+        "options": [
+          "readme-hall",
+          "room-docs-ru-docs",
+          "room-docs-hi-docs",
+          "room-docs-tr-docs"
+        ],
+        "answer": "readme-hall",
+        "file": "setup.py"
+      },
+      {
+        "question": "Which room holds `LICENSE`?",
+        "options": [
+          "room-docs-zh-hant-docs",
+          "readme-hall",
+          "room-docs-ja-docs",
+          "room-docs-ru-docs"
+        ],
+        "answer": "readme-hall",
+        "file": "LICENSE"
+      },
+      {
+        "question": "Which room holds `README.md`?",
+        "options": [
+          "room-docs-zh-hant-docs",
+          "readme-hall",
+          "room-docs-ja-docs",
+          "room-docs-ru-docs"
+        ],
+        "answer": "readme-hall",
+        "file": "README.md"
+      }
+    ]
+  },
+  "narrated_by": "template"
 }
