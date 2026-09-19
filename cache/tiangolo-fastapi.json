@@ -1,0 +1,158 @@
+{
+  "repo": "tiangolo/fastapi",
+  "language": "Python",
+  "warnings": [
+    "This repo is large. We'll simplify to 12 rooms or fewer.",
+    "No open issues found. The largest files guard the dungeon instead.",
+    "No dependency file found. This dungeon has no keys."
+  ],
+  "start": "readme-hall",
+  "boss": "readme-hall",
+  "rooms": {
+    "readme-hall": {
+      "folder": "",
+      "exits": [
+        "room-docs-en-docs",
+        "room-docs-hi-docs",
+        "room-docs-ja-docs",
+        "room-docs-ko-docs",
+        "room-docs-pt-docs",
+        "room-docs-ru-docs",
+        "room-docs-tr-docs",
+        "room-docs-uk-docs",
+        "room-docs-zh-docs",
+        "room-docs-zh-hant-docs",
+        "room-tests"
+      ],
+      "keys": [],
+      "monsters": [
+        "guardian-1",
+        "guardian-3",
+        "guardian-4"
+      ]
+    },
+    "room-docs-en-docs": {
+      "folder": "docs/en/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": [
+        "guardian-2"
+      ]
+    },
+    "room-docs-hi-docs": {
+      "folder": "docs/hi/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-ja-docs": {
+      "folder": "docs/ja/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-ko-docs": {
+      "folder": "docs/ko/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-pt-docs": {
+      "folder": "docs/pt/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-ru-docs": {
+      "folder": "docs/ru/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-tr-docs": {
+      "folder": "docs/tr/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-uk-docs": {
+      "folder": "docs/uk/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-zh-hant-docs": {
+      "folder": "docs/zh-hant/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-zh-docs": {
+      "folder": "docs/zh/docs",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-tests": {
+      "folder": "tests",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    }
+  },
+  "monsters": {
+    "guardian-1": {
+      "kind": "guardian",
+      "title": "Guardian of uv.lock",
+      "url": null,
+      "placed_by": "fallback",
+      "file": "uv.lock"
+    },
+    "guardian-2": {
+      "kind": "guardian",
+      "title": "Guardian of docs/en/docs/release-notes.md",
+      "url": null,
+      "placed_by": "fallback",
+      "file": "docs/en/docs/release-notes.md"
+    },
+    "guardian-3": {
+      "kind": "guardian",
+      "title": "Guardian of docs/en/docs/img/deployment/https/https.drawio.svg",
+      "url": null,
+      "placed_by": "fallback",
+      "file": "docs/en/docs/img/deployment/https/https.drawio.svg"
+    },
+    "guardian-4": {
+      "kind": "guardian",
+      "title": "Guardian of docs/en/docs/img/deployment/https/https06.drawio.svg",
+      "url": null,
+      "placed_by": "fallback",
+      "file": "docs/en/docs/img/deployment/https/https06.drawio.svg"
+    }
+  },
+  "keys": {},
+  "narration": null,
+  "quiz": null
+}

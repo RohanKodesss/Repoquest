@@ -1,0 +1,132 @@
+{
+  "repo": "pallets/flask",
+  "language": "Python",
+  "warnings": [
+    "This repo is large. We'll simplify to 12 rooms or fewer.",
+    "No dependency file found. This dungeon has no keys."
+  ],
+  "start": "readme-hall",
+  "boss": "readme-hall",
+  "rooms": {
+    "readme-hall": {
+      "folder": "",
+      "exits": [
+        "room-docs",
+        "room-examples-javascript",
+        "room-examples-tutorial-flaskr",
+        "room-examples-tutorial-tests",
+        "room-src-flask",
+        "room-tests"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs": {
+      "folder": "docs",
+      "exits": [
+        "readme-hall",
+        "room-docs-deploying",
+        "room-docs-patterns",
+        "room-docs-tutorial"
+      ],
+      "keys": [],
+      "monsters": [
+        "issue-6146"
+      ]
+    },
+    "room-docs-deploying": {
+      "folder": "docs/deploying",
+      "exits": [
+        "room-docs"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-patterns": {
+      "folder": "docs/patterns",
+      "exits": [
+        "room-docs"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-docs-tutorial": {
+      "folder": "docs/tutorial",
+      "exits": [
+        "room-docs"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-examples-javascript": {
+      "folder": "examples/javascript",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-examples-tutorial-flaskr": {
+      "folder": "examples/tutorial/flaskr",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-examples-tutorial-tests": {
+      "folder": "examples/tutorial/tests",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-src-flask": {
+      "folder": "src/flask",
+      "exits": [
+        "readme-hall"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-tests": {
+      "folder": "tests",
+      "exits": [
+        "readme-hall",
+        "room-tests-templates",
+        "room-tests-test_apps-cliapp"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-tests-templates": {
+      "folder": "tests/templates",
+      "exits": [
+        "room-tests"
+      ],
+      "keys": [],
+      "monsters": []
+    },
+    "room-tests-test_apps-cliapp": {
+      "folder": "tests/test_apps/cliapp",
+      "exits": [
+        "room-tests"
+      ],
+      "keys": [],
+      "monsters": []
+    }
+  },
+  "monsters": {
+    "issue-6146": {
+      "kind": "issue",
+      "title": "Add Cloudflare to Flask Hosting Platforms docs?",
+      "url": "https://github.com/pallets/flask/issues/6146",
+      "placed_by": "keyword",
+      "file": null
+    }
+  },
+  "keys": {},
+  "narration": null,
+  "quiz": null
+}

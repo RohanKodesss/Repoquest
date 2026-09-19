@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import os
 
-from modules import cache, github_fetch, repo_check
+from modules import cache, github_fetch, map_builder, repo_check
 
 load_dotenv()
 
@@ -32,7 +32,9 @@ def check_repo():
     1. Validates URL format.
     2. Checks cache first (returns cached summary without network call).
     3. Fetches repo info, tree, README, issues, dependency file from GitHub.
-    4. Runs playability checks.
+    4. Runs playability check.
+    5. Builds map, checks connectivity, saves to cache.
+    6. Returns traffic light + counts.
     """
     body = request.get_json(silent=True)
     if not isinstance(body, dict) or "url" not in body or not isinstance(body.get("url"), str):
@@ -101,23 +103,49 @@ def check_repo():
     if is_truncated:
         warnings.append("Repo file tree was truncated by GitHub API; dungeon built from available files.")
 
-    # Return raw repo_data payload along with playability status for Step 2
+    # 5. Build Map
+    repo_data = {
+        "owner": owner,
+        "repo": repo,
+        "language": language,
+        "description": repo_info.get("description") or "",
+        "readme": readme,
+        "tree": tree,
+        "issues": issues,
+        "dependencies": dependencies or [],
+        "dep_filename": dep_filename,
+        "warnings": warnings,
+    }
+
+    try:
+        game_map = map_builder.build_map(repo_data)
+    except ValueError:
+        return _error_response(
+            "map_failed",
+            "Couldn't build a dungeon for this repo. Try another one.",
+            422
+        )
+
+    # 6. Save map to cache
+    cache.save(owner, repo, game_map)
+
+    room_count = len(game_map["rooms"])
+    monster_count = len(game_map["monsters"])
+    key_count = len(game_map["keys"])
+
+    msg = f"Playable. {room_count} rooms, {monster_count} monsters, {key_count} keys." if warnings else f"Ready. {room_count} rooms, {monster_count} monsters, {key_count} keys."
+
     return jsonify({
         "status": "yellow" if warnings else "green",
         "owner": owner,
         "repo": repo,
         "language": language,
+        "rooms": room_count,
+        "monsters": monster_count,
+        "keys": key_count,
         "warnings": warnings,
-        "message": f"Playable. {len(tree)} items found.",
-        "cached": False,
-        "repo_data": {
-            "description": repo_info.get("description") or "",
-            "readme": readme,
-            "tree_count": len(tree),
-            "issues_count": len(issues),
-            "dependencies": dependencies or [],
-            "dep_filename": dep_filename
-        }
+        "message": msg,
+        "cached": False
     }), 200
 
 
