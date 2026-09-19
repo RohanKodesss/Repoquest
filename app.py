@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import os
 
-from modules import cache, github_fetch, map_builder, repo_check
+from modules import cache, github_fetch, map_builder, narrator, repo_check
 
 load_dotenv()
 
@@ -151,8 +151,46 @@ def check_repo():
 
 @app.route("/api/start", methods=["POST"])
 def start_game():
-    """Load the map, add narration, return game object."""
-    return jsonify({"status": "todo"})
+    """
+    Start game endpoint.
+    1. Validates URL format.
+    2. Loads saved map from cache (returns 409 not_checked if missing).
+    3. If narration is null, populates with template text fallback.
+    4. Saves updated game to cache.
+    5. Returns full game JSON object.
+    """
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or "url" not in body or not isinstance(body.get("url"), str):
+        return _error_response(
+            "bad_request",
+            'Send JSON like {"url": "github.com/owner/repo"}.',
+            400
+        )
+
+    parsed = repo_check.parse_repo_url(body.get("url", ""))
+    if parsed is None:
+        return _error_response(
+            "bad_format",
+            "That doesn't look like a GitHub URL. Try github.com/owner/repo.",
+            400
+        )
+
+    owner, repo = parsed
+    game = cache.load(owner, repo)
+
+    if game is None:
+        return _error_response(
+            "not_checked",
+            "Check the repo first.",
+            409
+        )
+
+    # If game has no narration yet, fill using template text
+    if game.get("narration") is None:
+        game = narrator.fill_templates(game)
+        cache.save(owner, repo, game)
+
+    return jsonify(game), 200
 
 
 if __name__ == "__main__":

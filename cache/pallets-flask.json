@@ -127,6 +127,26 @@
     }
   },
   "keys": {},
-  "narration": null,
-  "quiz": null
+  "narration": {
+    "rooms": {
+      "readme-hall": "You are in the entrance hall. Look around — exits lead onward.",
+      "room-docs": "You are in docs. Look around — exits lead onward.",
+      "room-docs-deploying": "You are in docs/deploying. Look around — exits lead onward.",
+      "room-docs-patterns": "You are in docs/patterns. Look around — exits lead onward.",
+      "room-docs-tutorial": "You are in docs/tutorial. Look around — exits lead onward.",
+      "room-examples-javascript": "You are in examples/javascript. Look around — exits lead onward.",
+      "room-examples-tutorial-flaskr": "You are in examples/tutorial/flaskr. Look around — exits lead onward.",
+      "room-examples-tutorial-tests": "You are in examples/tutorial/tests. Look around — exits lead onward.",
+      "room-src-flask": "You are in src/flask. Look around — exits lead onward.",
+      "room-tests": "You are in tests. Look around — exits lead onward.",
+      "room-tests-templates": "You are in tests/templates. Look around — exits lead onward.",
+      "room-tests-test_apps-cliapp": "You are in tests/test_apps/cliapp. Look around — exits lead onward."
+    },
+    "monsters": {
+      "issue-6146": "A creature blocks the way: Add Cloudflare to Flask Hosting Platforms docs?."
+    },
+    "keys": {}
+  },
+  "quiz": null,
+  "narrated_by": "template"
 }
