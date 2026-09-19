@@ -1,9 +1,23 @@
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
+import os
+
+from modules import cache, github_fetch, repo_check
 
 load_dotenv()
 
 app = Flask(__name__)
+
+
+def _error_response(error_code: str, message: str, status_code: int, suggestion: str = None):
+    payload = {
+        "status": "red",
+        "error": error_code,
+        "message": message,
+    }
+    if suggestion:
+        payload["suggestion"] = suggestion
+    return jsonify(payload), status_code
 
 
 @app.route("/")
@@ -14,24 +28,105 @@ def index():
 @app.route("/api/check", methods=["POST"])
 def check_repo():
     """
-    Validate the URL, look in the cache first, otherwise fetch GitHub data,
-    build the map, check connectivity, save to cache, return traffic light.
+    Repo check endpoint.
+    1. Validates URL format.
+    2. Checks cache first (returns cached summary without network call).
+    3. Fetches repo info, tree, README, issues, dependency file from GitHub.
+    4. Runs playability checks.
     """
-    # Placeholder — Step 2 wires in repo_check and github_fetch.
-    return jsonify({"status": "todo"})
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or "url" not in body or not isinstance(body.get("url"), str):
+        return _error_response(
+            "bad_request",
+            'Send JSON like {"url": "github.com/owner/repo"}.',
+            400
+        )
+
+    parsed = repo_check.parse_repo_url(body.get("url", ""))
+    if parsed is None:
+        return _error_response(
+            "bad_format",
+            "That doesn't look like a GitHub URL. Try github.com/owner/repo.",
+            400
+        )
+
+    owner, repo = parsed
+
+    # 1. Check cache first
+    cached_game = cache.load(owner, repo)
+    if cached_game is not None:
+        warnings = cached_game.get("warnings", [])
+        return jsonify({
+            "status": "yellow" if warnings else "green",
+            "owner": owner,
+            "repo": repo,
+            "language": cached_game.get("language", "Unknown"),
+            "rooms": len(cached_game.get("rooms", {})),
+            "monsters": len(cached_game.get("monsters", {})),
+            "keys": len(cached_game.get("keys", {})),
+            "warnings": warnings,
+            "message": "Loaded from cache.",
+            "cached": True
+        }), 200
+
+    # 2. Fetch repo info from GitHub
+    try:
+        repo_info = github_fetch.fetch_repo_info(owner, repo)
+    except github_fetch.GitHubFetchError as err:
+        return _error_response(
+            err.error_code,
+            err.message,
+            err.status_code,
+            suggestion="Try the demo repo instead." if err.status_code in (403, 429) else None
+        )
+
+    branch = repo_info.get("default_branch", "main")
+    language = repo_info.get("language", "Unknown") or "Unknown"
+
+    # 3. Fetch tree, readme, issues, dependencies
+    try:
+        tree, is_truncated = github_fetch.fetch_tree(owner, repo, branch)
+        readme = github_fetch.fetch_readme(owner, repo)
+        issues = github_fetch.fetch_issues(owner, repo)
+        dependencies, dep_filename = github_fetch.fetch_dependency_file(owner, repo)
+    except github_fetch.GitHubFetchError as err:
+        return _error_response(err.error_code, err.message, err.status_code)
+
+    # 4. Playability check
+    ok, warnings, error_info = repo_check.playability_check(tree, issues, dependencies)
+    if not ok and error_info:
+        err_code, err_msg, err_status = error_info
+        return _error_response(err_code, err_msg, err_status)
+
+    if is_truncated:
+        warnings.append("Repo file tree was truncated by GitHub API; dungeon built from available files.")
+
+    # Return raw repo_data payload along with playability status for Step 2
+    return jsonify({
+        "status": "yellow" if warnings else "green",
+        "owner": owner,
+        "repo": repo,
+        "language": language,
+        "warnings": warnings,
+        "message": f"Playable. {len(tree)} items found.",
+        "cached": False,
+        "repo_data": {
+            "description": repo_info.get("description") or "",
+            "readme": readme,
+            "tree_count": len(tree),
+            "issues_count": len(issues),
+            "dependencies": dependencies or [],
+            "dep_filename": dep_filename
+        }
+    }), 200
 
 
 @app.route("/api/start", methods=["POST"])
 def start_game():
-    """
-    Load the saved map, add LLM narration (with template fallback),
-    validate names, generate quiz, save, return the full game JSON.
-    """
-    # Placeholder — Step 8 wires in narrator, name_validator, quiz.
+    """Load the map, add narration, return game object."""
     return jsonify({"status": "todo"})
 
 
 if __name__ == "__main__":
-    import os
     debug = os.getenv("FLASK_DEBUG", "0") == "1"
     app.run(port=5000, debug=debug)

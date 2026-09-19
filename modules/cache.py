@@ -6,6 +6,7 @@ The folder is created on first save.
 A missing, empty, or corrupt file returns None (triggers a rebuild).
 """
 
+from __future__ import annotations
 import json
 import os
 
