@@ -13,10 +13,9 @@ Does NOT check:
   - Plain prose words
   - Slash-paths whose first segment is not in the real tree
     (so "and/or" in prose is never flagged)
-
-Wired in: Step 8 (but importable from Step 6 so tests can run)
 """
 
+from __future__ import annotations
 import re
 
 # Tokens the LLM wrapped in backticks.

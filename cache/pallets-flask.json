@@ -147,6 +147,55 @@
     },
     "keys": {}
   },
-  "quiz": null,
+  "quiz": {
+    "monsters": {
+      "issue-6146": {
+        "question": "Which room holds `docs/__init__.py`?",
+        "options": [
+          "room-examples-javascript",
+          "room-docs",
+          "readme-hall",
+          "room-docs-patterns"
+        ],
+        "answer": "room-docs",
+        "file": "docs/__init__.py"
+      }
+    },
+    "boss": [
+      {
+        "question": "Which room holds `README.md`?",
+        "options": [
+          "room-tests",
+          "room-examples-tutorial-tests",
+          "room-tests-templates",
+          "readme-hall"
+        ],
+        "answer": "readme-hall",
+        "file": "README.md"
+      },
+      {
+        "question": "Which room holds `app.py`?",
+        "options": [
+          "room-src-flask",
+          "room-examples-javascript",
+          "readme-hall",
+          "room-examples-tutorial-tests"
+        ],
+        "answer": "readme-hall",
+        "file": "app.py"
+      },
+      {
+        "question": "Which room holds `requirements.txt`?",
+        "options": [
+          "room-docs",
+          "readme-hall",
+          "room-examples-tutorial-tests",
+          "room-docs-deploying"
+        ],
+        "answer": "readme-hall",
+        "file": "requirements.txt"
+      }
+    ]
+  },
   "narrated_by": "template"
 }

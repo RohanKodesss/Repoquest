@@ -221,7 +221,6 @@ function renderGame() {
     roomData.keys.forEach((keyName) => {
       const keyBtn = addElement(itemsContainer, "button", `📦 ${keyName}`, "btn-secondary");
       keyBtn.addEventListener("click", () => {
-        // Pick up key: remove from room, add to inventory, +5 score
         const index = roomData.keys.indexOf(keyName);
         if (index > -1) {
           roomData.keys.splice(index, 1);
@@ -242,11 +241,11 @@ function renderGame() {
       if (!monster) return;
 
       const card = addElement(monstersContainer, "div", null, "monster-card");
-      
-      const headerText = monster.kind === "issue" 
+
+      const headerText = monster.kind === "issue"
         ? `👹 Issue: ${monster.title}`
         : `👹 ${monster.title}`;
-      
+
       addElement(card, "div", headerText, "monster-title");
       addElement(card, "span", `placed by: ${monster.placed_by}`, "badge");
 
@@ -258,6 +257,121 @@ function renderGame() {
       } else if (monster.file) {
         addElement(card, "div", `Guarding: ${monster.file}`, "dim");
       }
+
+      const fightBtn = addElement(card, "button", "Fight Monster", "btn-danger");
+      fightBtn.addEventListener("click", () => startMonsterFight(monsterId));
     });
   }
+}
+
+function startMonsterFight(monsterId) {
+  hideAllScreens();
+  fightScreen.style.display = "block";
+  renderFightScreen(monsterId, null);
+}
+
+function renderFightScreen(monsterId, statusMessage) {
+  clearElement(fightScreen);
+
+  const monster = state.game.monsters[monsterId];
+  const qData = state.game.quiz && state.game.quiz.monsters && state.game.quiz.monsters[monsterId];
+
+  // 1. Top HUD
+  const hud = addElement(fightScreen, "div", null, null);
+  hud.id = "hud";
+  addElement(hud, "span", `❤️ ${state.health}`, "red");
+  addElement(hud, "span", `⭐ ${state.score}`, "yellow");
+
+  // 2. Fight Card Container
+  const card = addElement(fightScreen, "div", null, "fight-card");
+  const headerText = monster.kind === "issue"
+    ? `👹 Issue: ${monster.title}`
+    : `👹 ${monster.title}`;
+  addElement(card, "h2", headerText, "monster-title");
+
+  if (monster.url) {
+    const link = addElement(card, "a", "[ Open on GitHub ]", "issue-link");
+    link.href = monster.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+  }
+
+  if (statusMessage) {
+    addElement(card, "p", statusMessage.text, statusMessage.type);
+  }
+
+  if (!qData) {
+    addElement(card, "p", "No quiz question available.", "dim");
+    const backBtn = addElement(card, "button", "Return to Room", "btn-secondary");
+    backBtn.addEventListener("click", () => {
+      hideAllScreens();
+      gameScreen.style.display = "block";
+      renderGame();
+    });
+    return;
+  }
+
+  // 3. Question Text
+  addElement(card, "p", qData.question, "question");
+
+  // 4. Option Buttons
+  const optsContainer = addElement(card, "div", null, null);
+  qData.options.forEach((optId) => {
+    const optRoom = state.game.rooms[optId];
+    const optFolder = optRoom ? (optRoom.folder || "README HALL") : optId;
+    const optBtn = addElement(optsContainer, "button", optFolder, "btn-secondary");
+
+    optBtn.addEventListener("click", () => {
+      if (optId === qData.answer) {
+        // Correct answer: +10 score, remove monster from room
+        state.score += 10;
+        const currentRoomData = state.game.rooms[state.currentRoom];
+        if (currentRoomData && currentRoomData.monsters) {
+          const idx = currentRoomData.monsters.indexOf(monsterId);
+          if (idx > -1) {
+            currentRoomData.monsters.splice(idx, 1);
+          }
+        }
+        hideAllScreens();
+        gameScreen.style.display = "block";
+        renderGame();
+      } else {
+        // Wrong answer: -20 health
+        state.health -= 20;
+        if (state.health <= 0) {
+          state.health = 0;
+          renderDefeatScreen();
+        } else {
+          renderFightScreen(monsterId, {
+            text: "❌ Wrong answer! You lost 20 health. Try again.",
+            type: "red"
+          });
+        }
+      }
+    });
+  });
+
+  // Flee / Back button
+  const fleeBtn = addElement(card, "button", "Flee", "btn-secondary");
+  fleeBtn.addEventListener("click", () => {
+    hideAllScreens();
+    gameScreen.style.display = "block";
+    renderGame();
+  });
+}
+
+function renderDefeatScreen() {
+  hideAllScreens();
+  endScreen.style.display = "block";
+  clearElement(endScreen);
+
+  const card = addElement(endScreen, "div", null, "end-card");
+  addElement(card, "h2", "💀 Game Over!", "red");
+  addElement(card, "p", `Final Score: ${state.score}`);
+  
+  const againBtn = addElement(card, "button", "Try Again");
+  againBtn.addEventListener("click", () => {
+    hideAllScreens();
+    startScreen.style.display = "block";
+  });
 }

@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import os
 
-from modules import cache, github_fetch, map_builder, narrator, repo_check
+from modules import cache, github_fetch, map_builder, narrator, quiz, repo_check
 
 load_dotenv()
 
@@ -154,10 +154,11 @@ def start_game():
     """
     Start game endpoint.
     1. Validates URL format.
-    2. Loads saved map from cache (returns 409 not_checked if missing).
-    3. If narration is null, populates with template text fallback.
-    4. Saves updated game to cache.
-    5. Returns full game JSON object.
+    2. Loads saved map from cache.
+    3. Populates template narration if missing.
+    4. Populates quiz questions if missing.
+    5. Saves updated game to cache.
+    6. Returns full game JSON object.
     """
     body = request.get_json(silent=True)
     if not isinstance(body, dict) or "url" not in body or not isinstance(body.get("url"), str):
@@ -185,11 +186,15 @@ def start_game():
             409
         )
 
-    # If game has no narration yet, fill using template text
+    # 1. Fill narration template if missing
     if game.get("narration") is None:
         game = narrator.fill_templates(game)
-        cache.save(owner, repo, game)
 
+    # 2. Fill quiz if missing
+    if game.get("quiz") is None:
+        game["quiz"] = quiz.generate_quiz(game)
+
+    cache.save(owner, repo, game)
     return jsonify(game), 200
 
 
