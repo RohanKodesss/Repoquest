@@ -3,6 +3,9 @@
    Rule: repo text is always set via element.textContent, never innerHTML.
    ========================================================= */
 
+// API Base URL (Configurable for deployment: e.g. "https://repoquest-backend.onrender.com")
+const API_BASE = "";
+
 // Game state lives in the browser
 const state = {
   game: null,
@@ -165,7 +168,7 @@ if (checkBtn) {
     animateScreen(checkScreen);
 
     try {
-      const res = await fetch("/api/check", {
+      const res = await fetch(`${API_BASE}/api/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
@@ -233,7 +236,7 @@ async function startGame(url) {
   loadingScreen.style.display = "block";
 
   try {
-    const res = await fetch("/api/start", {
+    const res = await fetch(`${API_BASE}/api/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url })

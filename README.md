@@ -72,8 +72,8 @@ You explore. You pick up keys. You fight monsters by answering quiz questions ab
 | index.html + app.js + style.css                      |
 | - URL input, repo check card                         |
 | - Game UI (rooms, buttons, monsters, HUD)            |
+| - Three.js background canvas + GSAP animations       |
 | - Game state and game rules live here                |
-| - No API keys here                                   |
 +----------------------+-------------------------------+
                        | HTTP (fetch)
                        v
@@ -99,6 +99,7 @@ You explore. You pick up keys. You fight monsters by answering quiz questions ab
 repoquest/
 │
 ├── app.py                  # Flask entry point (/api/check, /api/start, /)
+├── vercel.json             # Vercel static deployment config
 ├── requirements.txt        # Python dependencies
 ├── .env.example            # API key and configuration template
 ├── .gitignore              # Git ignore rules
@@ -114,11 +115,11 @@ repoquest/
 │   ├── map_builder.py      # Room merging, connectivity check, boss/key/monster placement
 │   ├── narrator.py         # LLM narration (google-genai) + template fallback
 │   ├── name_validator.py   # Regex extraction & filename validation against real tree
-│   ├── quiz.py             # Quiz question generator & distractor sampling
+│   ├── quiz.py             # Quiz question generator (Types #1 and #2) & distractor sampling
 │   └── cache.py            # JSON cache load/save (cache/owner-repo.json)
 │
 ├── templates/
-│   └── index.html          # Single-page HTML shell
+│   └── index.html          # Single-page HTML shell with Three.js & GSAP CDNs
 │
 ├── static/
 │   ├── logo.svg            # Vector brand logo
@@ -183,7 +184,19 @@ All 8 tests will execute:
 - `test_prose_slashes_are_not_flagged`: Proves prose slashes (e.g. `and/or`) are ignored.
 - `test_trailing_period_is_not_flagged`: Proves trailing punctuation does not cause false positives.
 
-## 12. For Judges
+## 12. Deployment (Option A)
+
+RepoQuest is configured for split deployment:
+1. **Frontend (Vercel):**
+   - Connect the repository to [Vercel](https://vercel.com).
+   - Vercel automatically detects `vercel.json` and serves the static frontend assets.
+2. **Backend (Render / Railway / Fly.io):**
+   - Deploy `app.py` as a Python web service.
+   - Set environment variables (`GITHUB_TOKEN`, `GEMINI_API_KEY`, `GEMINI_MODEL`).
+3. **Connect Frontend to Backend:**
+   - In `static/app.js`, set `const API_BASE = "https://your-backend-service.onrender.com";`.
+
+## 13. For Judges
 
 | Question | Answer |
 |---|---|
@@ -193,12 +206,12 @@ All 8 tests will execute:
 | **What if the AI fails?** | The game falls back to template text and keeps playing. |
 | **What's missing?** | See Honest Limits below. |
 
-## 13. Honest Limits
+## 14. Honest Limits
 - Monster-to-room matching is a heuristic based on file mentions, labels, and keywords.
 - When a repo has no open issues, monsters are the largest files ("guardians"), not real problems.
 - Public repos only. Large repos are simplified to 12 rooms or fewer.
 - The validator checks repo names written in backticks, file extensions, or real path prefixes — not every word in prose.
 - Import corridors, fog-of-war map, and multiplayer are not in the MVP.
 
-## 14. License
+## 15. License
 MIT License
