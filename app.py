@@ -205,4 +205,5 @@ def start_game():
 
 if __name__ == "__main__":
     debug = os.getenv("FLASK_DEBUG", "0") == "1"
-    app.run(port=5000, debug=debug)
+    port = int(os.getenv("PORT", 5001))
+    app.run(port=port, debug=debug)
