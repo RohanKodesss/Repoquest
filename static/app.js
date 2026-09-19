@@ -28,6 +28,50 @@ const repoUrlInput = document.getElementById("repo-url");
 const checkBtn = document.getElementById("check-btn");
 const demoLink = document.getElementById("demo-link");
 
+/* =========================================================
+   Part 1 — GSAP Animation Helpers (Non-blocking, safe checks)
+   ========================================================= */
+function anim(fn) {
+  if (typeof gsap === "undefined") return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  try {
+    fn();
+  } catch (e) {
+    // Fail silently if GSAP encounters an error
+  }
+}
+
+function animateScreen(el) {
+  anim(() => {
+    gsap.fromTo(el, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" });
+  });
+}
+
+function animateRoomText(el) {
+  anim(() => {
+    gsap.fromTo(el, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power1.out" });
+  });
+}
+
+function animateDamage() {
+  anim(() => {
+    gsap.fromTo("#hud .red", { scale: 1.4 }, { scale: 1, duration: 0.25 });
+    gsap.to(".fight-card", { x: 4, duration: 0.04, repeat: 4, yoyo: true });
+  });
+}
+
+function animateScore() {
+  anim(() => {
+    gsap.fromTo("#hud .yellow", { scale: 1.3 }, { scale: 1, duration: 0.25 });
+  });
+}
+
+function animateVictory(el) {
+  anim(() => {
+    gsap.fromTo(el, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.4)" });
+  });
+}
+
 // Safe DOM element helper
 function addElement(parent, tag, text, className) {
   const el = document.createElement(tag);
@@ -74,6 +118,7 @@ if (checkBtn) {
     clearElement(checkScreen);
     checkScreen.style.display = "block";
     addElement(checkScreen, "p", "Checking repository...", "dim");
+    animateScreen(checkScreen);
 
     try {
       const res = await fetch("/api/check", {
@@ -94,6 +139,7 @@ if (checkBtn) {
 function renderErrorCard(message, suggestion) {
   clearElement(errorScreen);
   errorScreen.style.display = "block";
+  animateScreen(errorScreen);
   const box = addElement(errorScreen, "div", null, "error-box");
   addElement(box, "p", `❌ ${message}`, "error-msg");
   if (suggestion) {
@@ -104,6 +150,7 @@ function renderErrorCard(message, suggestion) {
 function renderCheckCard(data) {
   clearElement(checkScreen);
   checkScreen.style.display = "block";
+  animateScreen(checkScreen);
 
   if (data.status === "red") {
     const box = addElement(checkScreen, "div", null, "error-box");
@@ -188,6 +235,8 @@ function renderGame() {
     return;
   }
 
+  animateScreen(gameScreen);
+
   // 1. Top HUD
   const hud = addElement(gameScreen, "div", null, null);
   hud.id = "hud";
@@ -206,7 +255,8 @@ function renderGame() {
   const narrationText =
     (state.game.narration && state.game.narration.rooms && state.game.narration.rooms[state.currentRoom]) ||
     `You stand in ${folder || "the entrance hall"}.`;
-  addElement(gameScreen, "p", narrationText, "room-text");
+  const roomTextEl = addElement(gameScreen, "p", narrationText, "room-text");
+  animateRoomText(roomTextEl);
 
   // 4. Exits Section
   addElement(gameScreen, "div", "Exits:", "section-label");
@@ -243,6 +293,7 @@ function renderGame() {
         }
         state.inventory.push(keyName);
         state.score += 5;
+        animateScore();
         renderGame();
       });
     });
@@ -288,6 +339,7 @@ function startMonsterFight(monsterId) {
 
 function renderFightScreen(monsterId, statusMessage) {
   clearElement(fightScreen);
+  animateScreen(fightScreen);
 
   const monster = state.game.monsters[monsterId];
   const qData = state.game.quiz && state.game.quiz.monsters && state.game.quiz.monsters[monsterId];
@@ -341,6 +393,7 @@ function renderFightScreen(monsterId, statusMessage) {
       if (optId === qData.answer) {
         state.score += 10;
         state.defeatedMonsters += 1;
+        animateScore();
         const currentRoomData = state.game.rooms[state.currentRoom];
         if (currentRoomData && currentRoomData.monsters) {
           const idx = currentRoomData.monsters.indexOf(monsterId);
@@ -353,6 +406,7 @@ function renderFightScreen(monsterId, statusMessage) {
         renderGame();
       } else {
         state.health -= 20;
+        animateDamage();
         if (state.health <= 0) {
           state.health = 0;
           renderEndScreen(false);
@@ -382,6 +436,7 @@ function startBossFight() {
 
 function renderBossFightScreen(statusMessage) {
   clearElement(fightScreen);
+  animateScreen(fightScreen);
 
   const bossRoom = state.game.rooms[state.game.boss];
   const bossFolder = bossRoom ? (bossRoom.folder || "README HALL") : state.game.boss;
@@ -428,6 +483,7 @@ function renderBossFightScreen(statusMessage) {
           state.score += 50;
           renderEndScreen(true);
         } else {
+          animateScore();
           renderBossFightScreen({
             text: "✅ Correct answer! Next question...",
             type: "green"
@@ -435,6 +491,7 @@ function renderBossFightScreen(statusMessage) {
         }
       } else {
         state.health -= 20;
+        animateDamage();
         if (state.health <= 0) {
           state.health = 0;
           renderEndScreen(false);
@@ -455,6 +512,11 @@ function renderEndScreen(isVictory) {
   clearElement(endScreen);
 
   const card = addElement(endScreen, "div", null, "end-card");
+  if (isVictory) {
+    animateVictory(card);
+  } else {
+    animateScreen(endScreen);
+  }
 
   if (isVictory) {
     addElement(card, "h2", "🏆 You defeated the Boss!", "green");
