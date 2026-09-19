@@ -10,6 +10,9 @@ const state = {
   health: 100,
   score: 0,
   inventory: [],
+  visitedRooms: new Set(),
+  defeatedMonsters: 0,
+  bossQuestionIndex: 0,
   currentUrl: ""
 };
 
@@ -158,6 +161,9 @@ async function startGame(url) {
     state.health = 100;
     state.score = 0;
     state.inventory = [];
+    state.visitedRooms = new Set([state.currentRoom]);
+    state.defeatedMonsters = 0;
+    state.bossQuestionIndex = 0;
 
     hideAllScreens();
     gameScreen.style.display = "block";
@@ -172,8 +178,15 @@ async function startGame(url) {
 
 function renderGame() {
   clearElement(gameScreen);
+  state.visitedRooms.add(state.currentRoom);
   const roomData = state.game.rooms[state.currentRoom];
   if (!roomData) return;
+
+  // Check if entering boss room
+  if (state.currentRoom === state.game.boss) {
+    startBossFight();
+    return;
+  }
 
   // 1. Top HUD
   const hud = addElement(gameScreen, "div", null, null);
@@ -203,8 +216,11 @@ function renderGame() {
     roomData.exits.forEach((exitId) => {
       const exitRoom = state.game.rooms[exitId];
       const exitFolder = exitRoom ? exitRoom.folder : exitId;
-      const btnText = `→ ${exitFolder || "readme-hall"}`;
-      const btn = addElement(exitsContainer, "button", btnText, "btn-secondary");
+      const isBossExit = exitId === state.game.boss;
+      const prefix = isBossExit ? "👑 BOSS → " : "→ ";
+      const btnText = `${prefix}${exitFolder || "readme-hall"}`;
+      const btnClass = isBossExit ? "btn-danger" : "btn-secondary";
+      const btn = addElement(exitsContainer, "button", btnText, btnClass);
       btn.addEventListener("click", () => {
         state.currentRoom = exitId;
         renderGame();
@@ -276,13 +292,13 @@ function renderFightScreen(monsterId, statusMessage) {
   const monster = state.game.monsters[monsterId];
   const qData = state.game.quiz && state.game.quiz.monsters && state.game.quiz.monsters[monsterId];
 
-  // 1. Top HUD
+  // HUD
   const hud = addElement(fightScreen, "div", null, null);
   hud.id = "hud";
   addElement(hud, "span", `❤️ ${state.health}`, "red");
   addElement(hud, "span", `⭐ ${state.score}`, "yellow");
 
-  // 2. Fight Card Container
+  // Container
   const card = addElement(fightScreen, "div", null, "fight-card");
   const headerText = monster.kind === "issue"
     ? `👹 Issue: ${monster.title}`
@@ -311,10 +327,10 @@ function renderFightScreen(monsterId, statusMessage) {
     return;
   }
 
-  // 3. Question Text
+  // Question Text
   addElement(card, "p", qData.question, "question");
 
-  // 4. Option Buttons
+  // Options
   const optsContainer = addElement(card, "div", null, null);
   qData.options.forEach((optId) => {
     const optRoom = state.game.rooms[optId];
@@ -323,8 +339,8 @@ function renderFightScreen(monsterId, statusMessage) {
 
     optBtn.addEventListener("click", () => {
       if (optId === qData.answer) {
-        // Correct answer: +10 score, remove monster from room
         state.score += 10;
+        state.defeatedMonsters += 1;
         const currentRoomData = state.game.rooms[state.currentRoom];
         if (currentRoomData && currentRoomData.monsters) {
           const idx = currentRoomData.monsters.indexOf(monsterId);
@@ -336,11 +352,10 @@ function renderFightScreen(monsterId, statusMessage) {
         gameScreen.style.display = "block";
         renderGame();
       } else {
-        // Wrong answer: -20 health
         state.health -= 20;
         if (state.health <= 0) {
           state.health = 0;
-          renderDefeatScreen();
+          renderEndScreen(false);
         } else {
           renderFightScreen(monsterId, {
             text: "❌ Wrong answer! You lost 20 health. Try again.",
@@ -351,7 +366,6 @@ function renderFightScreen(monsterId, statusMessage) {
     });
   });
 
-  // Flee / Back button
   const fleeBtn = addElement(card, "button", "Flee", "btn-secondary");
   fleeBtn.addEventListener("click", () => {
     hideAllScreens();
@@ -360,18 +374,135 @@ function renderFightScreen(monsterId, statusMessage) {
   });
 }
 
-function renderDefeatScreen() {
+function startBossFight() {
+  hideAllScreens();
+  fightScreen.style.display = "block";
+  renderBossFightScreen(null);
+}
+
+function renderBossFightScreen(statusMessage) {
+  clearElement(fightScreen);
+
+  const bossRoom = state.game.rooms[state.game.boss];
+  const bossFolder = bossRoom ? (bossRoom.folder || "README HALL") : state.game.boss;
+  const bossQuestions = state.game.quiz && state.game.quiz.boss ? state.game.quiz.boss : [];
+  const qData = bossQuestions[state.bossQuestionIndex];
+
+  // HUD
+  const hud = addElement(fightScreen, "div", null, null);
+  hud.id = "hud";
+  addElement(hud, "span", `❤️ ${state.health}`, "red");
+  addElement(hud, "span", `⭐ ${state.score}`, "yellow");
+
+  const card = addElement(fightScreen, "div", null, "fight-card");
+  addElement(card, "h2", `🏆 BOSS FIGHT: ${bossFolder.toUpperCase()}`, "monster-title");
+  addElement(
+    card,
+    "div",
+    `Question ${state.bossQuestionIndex + 1} of ${bossQuestions.length}`,
+    "badge"
+  );
+
+  if (statusMessage) {
+    addElement(card, "p", statusMessage.text, statusMessage.type);
+  }
+
+  if (!qData) {
+    // If questions finished or missing
+    state.score += 50;
+    renderEndScreen(true);
+    return;
+  }
+
+  addElement(card, "p", qData.question, "question");
+
+  const optsContainer = addElement(card, "div", null, null);
+  qData.options.forEach((optId) => {
+    const optRoom = state.game.rooms[optId];
+    const optFolder = optRoom ? (optRoom.folder || "README HALL") : optId;
+    const optBtn = addElement(optsContainer, "button", optFolder, "btn-secondary");
+
+    optBtn.addEventListener("click", () => {
+      if (optId === qData.answer) {
+        state.bossQuestionIndex += 1;
+        if (state.bossQuestionIndex >= bossQuestions.length) {
+          // Defeated boss! +50 score
+          state.score += 50;
+          renderEndScreen(true);
+        } else {
+          renderBossFightScreen({
+            text: "✅ Correct answer! Next question...",
+            type: "green"
+          });
+        }
+      } else {
+        state.health -= 20;
+        if (state.health <= 0) {
+          state.health = 0;
+          renderEndScreen(false);
+        } else {
+          renderBossFightScreen({
+            text: "❌ Wrong answer! You lost 20 health. Try again.",
+            type: "red"
+          });
+        }
+      }
+    });
+  });
+}
+
+function renderEndScreen(isVictory) {
   hideAllScreens();
   endScreen.style.display = "block";
   clearElement(endScreen);
 
   const card = addElement(endScreen, "div", null, "end-card");
-  addElement(card, "h2", "💀 Game Over!", "red");
-  addElement(card, "p", `Final Score: ${state.score}`);
-  
-  const againBtn = addElement(card, "button", "Try Again");
+
+  if (isVictory) {
+    addElement(card, "h2", "🏆 You defeated the Boss!", "green");
+  } else {
+    addElement(card, "h2", "💀 Defeated in the Dungeon!", "red");
+  }
+
+  addElement(card, "p", `Final Score: ${state.score}`, "status-line");
+
+  addElement(card, "div", "What you learned:", "section-label");
+  const learnedList = addElement(card, "ul", null, "learned");
+
+  addElement(
+    learnedList,
+    "li",
+    `Visited ${state.visitedRooms.size} of ${Object.keys(state.game.rooms).length} rooms`
+  );
+  addElement(learnedList, "li", `Collected ${state.inventory.length} keys`);
+  addElement(learnedList, "li", `Defeated ${state.defeatedMonsters} monsters`);
+
+  const bossRoom = state.game.rooms[state.game.boss];
+  const bossFolder = bossRoom ? (bossRoom.folder || "README HALL") : state.game.boss;
+  addElement(learnedList, "li", `Reached the boss: ${bossFolder}`);
+
+  const btnRow = addElement(card, "div", null, "input-row");
+  btnRow.style.marginTop = "20px";
+
+  const againBtn = addElement(btnRow, "button", "Play Again");
   againBtn.addEventListener("click", () => {
+    state.currentRoom = state.game.start || "readme-hall";
+    state.health = 100;
+    state.score = 0;
+    state.inventory = [];
+    state.visitedRooms = new Set([state.currentRoom]);
+    state.defeatedMonsters = 0;
+    state.bossQuestionIndex = 0;
+    hideAllScreens();
+    gameScreen.style.display = "block";
+    renderGame();
+  });
+
+  const newRepoBtn = addElement(btnRow, "button", "Try Another Repo", "btn-secondary");
+  newRepoBtn.addEventListener("click", () => {
     hideAllScreens();
     startScreen.style.display = "block";
+    repoUrlInput.value = "";
+    clearElement(checkScreen);
   });
 }
