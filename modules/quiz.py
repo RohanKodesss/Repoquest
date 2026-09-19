@@ -3,9 +3,11 @@ quiz.py — Generate quiz questions from real repo data.
 
 generate_quiz(game) → quiz dict
 
-MVP Question Type: "Which room holds file X?"
-Correct answer comes from real map data.
-Distractors are up to 3 other real room IDs sampled by Python's random module (never the LLM).
+Quiz Type 1: "Which room holds file X?"
+Quiz Type 2 (when repo has >= 4 dependencies): "Which of these is a real dependency of this project?"
+
+Distractors are always real items sampled by code (never the LLM).
+If repo has < 4 dependencies, falls back to Quiz Type 1.
 No network calls. No LLM calls.
 """
 
@@ -14,36 +16,12 @@ import os
 import random
 
 
-def _get_room_files(game: dict, room_id: str) -> list[str]:
-    """Extract list of file paths associated with room_id, or fallback from all rooms."""
-    room = game.get("rooms", {}).get(room_id, {})
-    folder = room.get("folder", "")
-
-    # Look for files in tree or room folder
-    files = []
-    for rdata in game.get("rooms", {}).values():
-        rfolder = rdata.get("folder", "")
-        if rfolder == folder:
-            # Generate plausible file names based on folder
-            if folder:
-                files.append(f"{folder}/index.py")
-                files.append(f"{folder}/app.py")
-                files.append(f"{folder}/utils.py")
-            else:
-                files.append("README.md")
-                files.append("app.py")
-                files.append("requirements.txt")
-
-    return list(set(files))
-
-
-def _make_question(game: dict, target_room_id: str, used_files: set[str]) -> dict:
-    """Build a single 'Which room holds file X?' question object."""
+def _make_room_question(game: dict, target_room_id: str, used_files: set[str]) -> dict:
+    """Build a single 'Which room holds file X?' question object (Quiz Type #1)."""
     all_room_ids = list(game.get("rooms", {}).keys())
     target_room = game.get("rooms", {}).get(target_room_id, {})
     folder = target_room.get("folder", "")
 
-    # Pick a file path representing this room
     if folder:
         candidates = [
             f"{folder}/__init__.py",
@@ -55,7 +33,6 @@ def _make_question(game: dict, target_room_id: str, used_files: set[str]) -> dic
     else:
         candidates = ["README.md", "app.py", "requirements.txt", "setup.py", "LICENSE"]
 
-    # Select candidate file not yet used if possible
     file_x = candidates[0]
     for c in candidates:
         if c not in used_files:
@@ -63,12 +40,9 @@ def _make_question(game: dict, target_room_id: str, used_files: set[str]) -> dic
             break
     used_files.add(file_x)
 
-    # Correct answer is the target_room_id
     answer = target_room_id
-
-    # Distractors: other room IDs
     other_rooms = [r for r in all_room_ids if r != answer]
-    random.seed(42 + len(used_files))  # Deterministic sampling for consistency
+    random.seed(42 + len(used_files))
     num_distractors = min(3, len(other_rooms))
     distractors = random.sample(other_rooms, num_distractors) if other_rooms else []
 
@@ -76,10 +50,42 @@ def _make_question(game: dict, target_room_id: str, used_files: set[str]) -> dic
     random.shuffle(options)
 
     return {
+        "type": "room_file",
         "question": f"Which room holds `{file_x}`?",
         "options": options,
         "answer": answer,
         "file": file_x,
+    }
+
+
+def _make_dependency_question(game: dict, used_deps: set[str]) -> dict | None:
+    """
+    Build a single 'Which of these is a real dependency of this project?' question (Quiz Type #2).
+    Requires repo to have >= 4 dependencies.
+    """
+    dep_names = list(game.get("keys", {}).keys())
+    if len(dep_names) < 4:
+        return None  # Skip if < 4 dependencies, caller will fallback to Quiz Type #1
+
+    # Pick answer dependency
+    unused = [d for d in dep_names if d not in used_deps]
+    answer = unused[0] if unused else dep_names[0]
+    used_deps.add(answer)
+
+    # Distractors: 3 other dependencies from the same repo
+    other_deps = [d for d in dep_names if d != answer]
+    random.seed(100 + len(used_deps))
+    distractors = random.sample(other_deps, 3)
+
+    options = [answer] + distractors
+    random.shuffle(options)
+
+    return {
+        "type": "dependency",
+        "question": "Which of these is a real dependency of this project?",
+        "options": options,
+        "answer": answer,
+        "file": None,
     }
 
 
@@ -94,6 +100,7 @@ def generate_quiz(game: dict) -> dict:
     """
     monsters_quiz: dict[str, dict] = {}
     used_files: set[str] = set()
+    used_deps: set[str] = set()
 
     # Build map of monster_id -> room_id
     monster_room_map: dict[str, str] = {}
@@ -101,17 +108,26 @@ def generate_quiz(game: dict) -> dict:
         for mid in rdata.get("monsters", []):
             monster_room_map[mid] = rid
 
+    dep_count = len(game.get("keys", {}))
+
     # Monster questions
-    for mid in game.get("monsters", {}).keys():
+    for idx, mid in enumerate(game.get("monsters", {}).keys()):
+        # Alternate between Quiz Type 2 and Quiz Type 1 if dependencies >= 4
+        if dep_count >= 4 and idx % 2 == 1:
+            q_dep = _make_dependency_question(game, used_deps)
+            if q_dep:
+                monsters_quiz[mid] = q_dep
+                continue
+
         target_room = monster_room_map.get(mid, game.get("start", "readme-hall"))
-        monsters_quiz[mid] = _make_question(game, target_room, used_files)
+        monsters_quiz[mid] = _make_room_question(game, target_room, used_files)
 
     # Boss questions (3 sequential questions)
     boss_room_id = game.get("boss", game.get("start", "readme-hall"))
     boss_questions = [
-        _make_question(game, boss_room_id, used_files),
-        _make_question(game, boss_room_id, used_files),
-        _make_question(game, boss_room_id, used_files),
+        _make_room_question(game, boss_room_id, used_files),
+        _make_room_question(game, boss_room_id, used_files),
+        _make_room_question(game, boss_room_id, used_files),
     ]
 
     return {"monsters": monsters_quiz, "boss": boss_questions}

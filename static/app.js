@@ -9,6 +9,7 @@ const state = {
   currentRoom: null,
   health: 100,
   score: 0,
+  displayedScore: 0,
   inventory: [],
   visitedRooms: new Set(),
   defeatedMonsters: 0,
@@ -29,7 +30,7 @@ const checkBtn = document.getElementById("check-btn");
 const demoLink = document.getElementById("demo-link");
 
 /* =========================================================
-   Part 1 — GSAP Animation Helpers (Non-blocking, safe checks)
+   GSAP & Polish Animation Helpers
    ========================================================= */
 function anim(fn) {
   if (typeof gsap === "undefined") return;
@@ -37,33 +38,75 @@ function anim(fn) {
   try {
     fn();
   } catch (e) {
-    // Fail silently if GSAP encounters an error
+    // Fail silently
   }
 }
 
 function animateScreen(el) {
   anim(() => {
-    gsap.fromTo(el, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" });
+    gsap.fromTo(el, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" });
   });
 }
 
-function animateRoomText(el) {
-  anim(() => {
-    gsap.fromTo(el, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power1.out" });
-  });
+// 1. Typewriter Effect on Room Text
+let typewriterTimer = null;
+function applyTypewriter(element, fullText, speed = 15) {
+  if (typewriterTimer) clearInterval(typewriterTimer);
+
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    element.textContent = fullText;
+    return;
+  }
+
+  element.textContent = "";
+  let i = 0;
+  typewriterTimer = setInterval(() => {
+    if (i < fullText.length) {
+      element.textContent += fullText.charAt(i);
+      i++;
+    } else {
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+    }
+  }, speed);
 }
 
+// 3. Health animation on damage
 function animateDamage() {
   anim(() => {
-    gsap.fromTo("#hud .red", { scale: 1.4 }, { scale: 1, duration: 0.25 });
+    gsap.fromTo("#hud .red", { scale: 1.4, color: "#ff0000" }, { scale: 1, color: "#ff4444", duration: 0.25 });
     gsap.to(".fight-card", { x: 4, duration: 0.04, repeat: 4, yoyo: true });
   });
 }
 
-function animateScore() {
+// 5. Score Counter ticking up
+function updateScore(amount) {
+  state.score += amount;
   anim(() => {
-    gsap.fromTo("#hud .yellow", { scale: 1.3 }, { scale: 1, duration: 0.25 });
+    const scoreSpan = document.querySelector("#hud .yellow");
+    if (!scoreSpan) return;
+    const startVal = state.displayedScore;
+    const endVal = state.score;
+    const obj = { val: startVal };
+    gsap.to(obj, {
+      val: endVal,
+      duration: 0.4,
+      ease: "power1.out",
+      onUpdate: () => {
+        state.displayedScore = Math.floor(obj.val);
+        scoreSpan.textContent = `⭐ ${state.displayedScore}`;
+      },
+      onComplete: () => {
+        state.displayedScore = state.score;
+        scoreSpan.textContent = `⭐ ${state.score}`;
+      }
+    });
+    gsap.fromTo(scoreSpan, { scale: 1.3 }, { scale: 1, duration: 0.25 });
   });
+
+  if (typeof gsap === "undefined") {
+    state.displayedScore = state.score;
+  }
 }
 
 function animateVictory(el) {
@@ -87,6 +130,7 @@ function addElement(parent, tag, text, className) {
 
 // Clear element content
 function clearElement(el) {
+  if (typewriterTimer) clearInterval(typewriterTimer);
   el.textContent = "";
 }
 
@@ -207,6 +251,7 @@ async function startGame(url) {
     state.currentRoom = data.start || "readme-hall";
     state.health = 100;
     state.score = 0;
+    state.displayedScore = 0;
     state.inventory = [];
     state.visitedRooms = new Set([state.currentRoom]);
     state.defeatedMonsters = 0;
@@ -241,7 +286,7 @@ function renderGame() {
   const hud = addElement(gameScreen, "div", null, null);
   hud.id = "hud";
   addElement(hud, "span", `❤️ ${state.health}`, "red");
-  addElement(hud, "span", `⭐ ${state.score}`, "yellow");
+  addElement(hud, "span", `⭐ ${state.displayedScore}`, "yellow");
   if (state.inventory.length > 0) {
     addElement(hud, "span", `🎒 [ ${state.inventory.join(", ")} ]`, "dim");
   }
@@ -251,12 +296,12 @@ function renderGame() {
   const titleText = folder ? folder.toUpperCase() : "README HALL";
   addElement(gameScreen, "h2", titleText, "room-title");
 
-  // 3. Room Narration Prose
+  // 3. Room Narration Prose (Typewriter effect)
   const narrationText =
     (state.game.narration && state.game.narration.rooms && state.game.narration.rooms[state.currentRoom]) ||
     `You stand in ${folder || "the entrance hall"}.`;
-  const roomTextEl = addElement(gameScreen, "p", narrationText, "room-text");
-  animateRoomText(roomTextEl);
+  const roomTextEl = addElement(gameScreen, "p", "", "room-text");
+  applyTypewriter(roomTextEl, narrationText, 15);
 
   // 4. Exits Section
   addElement(gameScreen, "div", "Exits:", "section-label");
@@ -292,8 +337,7 @@ function renderGame() {
           roomData.keys.splice(index, 1);
         }
         state.inventory.push(keyName);
-        state.score += 5;
-        animateScore();
+        updateScore(5);
         renderGame();
       });
     });
@@ -348,7 +392,7 @@ function renderFightScreen(monsterId, statusMessage) {
   const hud = addElement(fightScreen, "div", null, null);
   hud.id = "hud";
   addElement(hud, "span", `❤️ ${state.health}`, "red");
-  addElement(hud, "span", `⭐ ${state.score}`, "yellow");
+  addElement(hud, "span", `⭐ ${state.displayedScore}`, "yellow");
 
   // Container
   const card = addElement(fightScreen, "div", null, "fight-card");
@@ -382,18 +426,20 @@ function renderFightScreen(monsterId, statusMessage) {
   // Question Text
   addElement(card, "p", qData.question, "question");
 
-  // Options
+  // Options (Handles both Quiz Type 1 room options and Quiz Type 2 dependency options)
   const optsContainer = addElement(card, "div", null, null);
   qData.options.forEach((optId) => {
-    const optRoom = state.game.rooms[optId];
-    const optFolder = optRoom ? (optRoom.folder || "README HALL") : optId;
-    const optBtn = addElement(optsContainer, "button", optFolder, "btn-secondary");
+    let optLabel = optId;
+    if (qData.type !== "dependency") {
+      const optRoom = state.game.rooms[optId];
+      optLabel = optRoom ? (optRoom.folder || "README HALL") : optId;
+    }
+    const optBtn = addElement(optsContainer, "button", optLabel, "btn-secondary");
 
     optBtn.addEventListener("click", () => {
       if (optId === qData.answer) {
-        state.score += 10;
         state.defeatedMonsters += 1;
-        animateScore();
+        updateScore(10);
         const currentRoomData = state.game.rooms[state.currentRoom];
         if (currentRoomData && currentRoomData.monsters) {
           const idx = currentRoomData.monsters.indexOf(monsterId);
@@ -447,7 +493,7 @@ function renderBossFightScreen(statusMessage) {
   const hud = addElement(fightScreen, "div", null, null);
   hud.id = "hud";
   addElement(hud, "span", `❤️ ${state.health}`, "red");
-  addElement(hud, "span", `⭐ ${state.score}`, "yellow");
+  addElement(hud, "span", `⭐ ${state.displayedScore}`, "yellow");
 
   const card = addElement(fightScreen, "div", null, "fight-card");
   addElement(card, "h2", `🏆 BOSS FIGHT: ${bossFolder.toUpperCase()}`, "monster-title");
@@ -463,7 +509,7 @@ function renderBossFightScreen(statusMessage) {
   }
 
   if (!qData) {
-    state.score += 50;
+    updateScore(50);
     renderEndScreen(true);
     return;
   }
@@ -480,10 +526,10 @@ function renderBossFightScreen(statusMessage) {
       if (optId === qData.answer) {
         state.bossQuestionIndex += 1;
         if (state.bossQuestionIndex >= bossQuestions.length) {
-          state.score += 50;
+          updateScore(50);
           renderEndScreen(true);
         } else {
-          animateScore();
+          updateScore(10);
           renderBossFightScreen({
             text: "✅ Correct answer! Next question...",
             type: "green"
@@ -549,6 +595,7 @@ function renderEndScreen(isVictory) {
     state.currentRoom = state.game.start || "readme-hall";
     state.health = 100;
     state.score = 0;
+    state.displayedScore = 0;
     state.inventory = [];
     state.visitedRooms = new Set([state.currentRoom]);
     state.defeatedMonsters = 0;
