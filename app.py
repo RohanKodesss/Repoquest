@@ -126,6 +126,9 @@ def check_repo():
             422
         )
 
+    # Store raw tree paths in game map for validator use
+    game_map["_tree_paths"] = [item["path"] for item in tree if "path" in item]
+
     # 6. Save map to cache
     cache.save(owner, repo, game_map)
 
@@ -155,7 +158,7 @@ def start_game():
     Start game endpoint.
     1. Validates URL format.
     2. Loads saved map from cache.
-    3. Populates template narration if missing.
+    3. Populates LLM narration (with template fallback & name validation).
     4. Populates quiz questions if missing.
     5. Saves updated game to cache.
     6. Returns full game JSON object.
@@ -186,9 +189,11 @@ def start_game():
             409
         )
 
-    # 1. Fill narration template if missing
+    tree_paths = game.get("_tree_paths", [])
+
+    # 1. Fill narration via narrator (LLM + validator + fallback) if missing
     if game.get("narration") is None:
-        game = narrator.fill_templates(game)
+        game = narrator.narrate(game, tree_paths=tree_paths)
 
     # 2. Fill quiz if missing
     if game.get("quiz") is None:
