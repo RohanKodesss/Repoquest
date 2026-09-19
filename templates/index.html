@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RepoQuest</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <h1>RepoQuest</h1>
+    <p class="tagline">Paste a GitHub repo. Play it as a dungeon.</p>
+
+    <!-- Screen 1: Start -->
+    <div id="start-screen">
+      <div class="input-row">
+        <input
+          type="text"
+          id="repo-url"
+          placeholder="github.com/owner/repo"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button id="check-btn">Check Repo</button>
+      </div>
+      <p class="hint">
+        Try the demo: <a href="#" id="demo-link">github.com/tiangolo/fastapi</a>
+      </p>
+    </div>
+
+    <!-- Screen 2: Repo Check Card -->
+    <div id="check-screen" style="display:none;" aria-live="polite"></div>
+
+    <!-- Screen 7: Loading -->
+    <div id="loading-screen" style="display:none;" aria-live="polite">
+      <p class="loading">⏳ Building dungeon…</p>
+    </div>
+
+    <!-- Screen 8: Error -->
+    <div id="error-screen" style="display:none;" aria-live="assertive"></div>
+
+    <!-- Screen 3: Game -->
+    <div id="game-screen" style="display:none;"></div>
+
+    <!-- Screen 4/5: Fight (monster and boss) -->
+    <div id="fight-screen" style="display:none;"></div>
+
+    <!-- Screen 6: End -->
+    <div id="end-screen" style="display:none;"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

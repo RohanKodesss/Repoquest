@@ -1,0 +1,281 @@
+/* =========================================================
+   RepoQuest — Terminal Style
+   Core principle: green on near-black, Courier New, no animations
+   except prefers-reduced-motion: no preference.
+   ========================================================= */
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base */
+body {
+  background: #0a0a0a;
+  color: #00ff00;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  line-height: 1.7;
+  padding: 40px 20px;
+}
+
+#app {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Title */
+h1 {
+  font-size: 2.4em;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.tagline {
+  color: #888;
+  margin-bottom: 28px;
+}
+
+/* ---- Start screen ---- */
+.input-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+input[type="text"] {
+  background: #111;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 1em;
+  flex: 1 1 340px;
+  min-width: 0;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: #00ffaa;
+  box-shadow: 0 0 4px #00ffaa44;
+}
+
+.hint {
+  color: #555;
+  font-size: 0.9em;
+}
+
+.hint a {
+  color: #00cc88;
+  text-decoration: none;
+}
+
+.hint a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Buttons ---- */
+button {
+  background: #00ff00;
+  color: #000;
+  border: none;
+  padding: 10px 22px;
+  font-family: inherit;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.1s;
+}
+
+button:hover {
+  background: #00dd00;
+}
+
+button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Secondary (exit/item) buttons */
+button.btn-secondary {
+  background: transparent;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  padding: 8px 18px;
+  margin: 4px 4px 4px 0;
+}
+
+button.btn-secondary:hover {
+  background: #00ff0022;
+}
+
+/* Danger (fight) button */
+button.btn-danger {
+  background: transparent;
+  color: #ff4444;
+  border: 1px solid #ff4444;
+  padding: 8px 18px;
+  margin: 4px 4px 4px 0;
+}
+
+button.btn-danger:hover {
+  background: #ff444422;
+}
+
+/* ---- Status colours ---- */
+.green  { color: #00ff00; }
+.yellow { color: #ffcc00; }
+.red    { color: #ff4444; }
+.dim    { color: #888; }
+
+/* ---- Check card ---- */
+.check-card {
+  border: 1px solid currentColor;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  max-width: 480px;
+}
+
+.check-card .status-line {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.check-card .counts {
+  margin-bottom: 12px;
+}
+
+.check-card .warnings {
+  font-size: 0.9em;
+  color: #ffcc00;
+  margin-bottom: 12px;
+}
+
+/* ---- HUD (health + score) ---- */
+#hud {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+
+/* ---- Game room ---- */
+.room-title {
+  font-size: 1.3em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+}
+
+.room-text {
+  margin-bottom: 16px;
+  color: #ccffcc;
+}
+
+.section-label {
+  color: #888;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+/* ---- Fight card ---- */
+.fight-card {
+  border: 1px solid #ff4444;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.fight-card .monster-title {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #ff4444;
+  margin-bottom: 6px;
+}
+
+.fight-card .issue-link {
+  color: #00ccff;
+  font-size: 0.85em;
+  display: inline-block;
+  margin-bottom: 14px;
+  text-decoration: none;
+}
+
+.fight-card .issue-link:hover {
+  text-decoration: underline;
+}
+
+.fight-card .question {
+  color: #ffcc00;
+  margin-bottom: 12px;
+}
+
+/* ---- End screen ---- */
+.end-card {
+  border: 1px solid #00ff00;
+  padding: 20px 24px;
+  max-width: 480px;
+}
+
+.end-card h2 {
+  margin-bottom: 12px;
+}
+
+.end-card .learned {
+  margin-top: 12px;
+  list-style: none;
+}
+
+.end-card .learned li::before {
+  content: "✅ ";
+}
+
+/* ---- Loading + Error ---- */
+.loading {
+  color: #888;
+  font-style: italic;
+}
+
+.error-box {
+  border: 1px solid #ff4444;
+  padding: 14px 18px;
+  max-width: 480px;
+}
+
+.error-box .error-msg {
+  color: #ff4444;
+  margin-bottom: 8px;
+}
+
+.error-box .suggestion {
+  color: #888;
+  font-size: 0.9em;
+}
+
+/* ---- Accessibility ---- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* Keyboard focus for all interactive elements */
+a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
