@@ -578,17 +578,75 @@ function renderEndScreen(isVictory) {
   addElement(card, "div", "What you learned:", "section-label");
   const learnedList = addElement(card, "ul", null, "learned");
 
-  addElement(
-    learnedList,
-    "li",
-    `Visited ${state.visitedRooms.size} of ${Object.keys(state.game.rooms).length} rooms`
-  );
-  addElement(learnedList, "li", `Collected ${state.inventory.length} keys`);
-  addElement(learnedList, "li", `Defeated ${state.defeatedMonsters} monsters`);
+  // Repo identity
+  if (state.game.repo) {
+    addElement(learnedList, "li", `📦 Repo: ${state.game.repo}`);
+  }
+  if (state.game.language && state.game.language !== "Unknown") {
+    addElement(learnedList, "li", `💻 Primary language: ${state.game.language}`);
+  }
 
+  // Folders explored (real folder paths from visited rooms)
+  const exploredFolders = [];
+  state.visitedRooms.forEach(roomId => {
+    const room = state.game.rooms[roomId];
+    if (room) {
+      const folderName = room.folder || "(root)";
+      exploredFolders.push(folderName);
+    }
+  });
+  if (exploredFolders.length > 0) {
+    addElement(learnedList, "li",
+      `📂 Explored ${exploredFolders.length} folder${exploredFolders.length === 1 ? "" : "s"}: ${exploredFolders.join(", ")}`
+    );
+  }
+
+  // Dependencies collected (real package names from inventory)
+  if (state.inventory.length > 0) {
+    addElement(learnedList, "li",
+      `🔑 Dependencies discovered: ${state.inventory.join(", ")}`
+    );
+  }
+
+  // Issues encountered (real issue titles from defeated monsters)
+  const issuesTitles = [];
+  Object.keys(state.game.monsters || {}).forEach(mId => {
+    const m = state.game.monsters[mId];
+    if (m && m.kind === "issue" && m.title) {
+      issuesTitles.push(m.title);
+    }
+  });
+  if (issuesTitles.length > 0) {
+    const shown = issuesTitles.slice(0, 5);
+    const label = `🐛 Issues in this repo: ${shown.join("; ")}`;
+    addElement(learnedList, "li", label + (issuesTitles.length > 5 ? ` (+${issuesTitles.length - 5} more)` : ""));
+  }
+
+  // Guardian files (if no issues, show file-based monsters)
+  const guardianFiles = [];
+  Object.keys(state.game.monsters || {}).forEach(mId => {
+    const m = state.game.monsters[mId];
+    if (m && m.kind === "guardian" && m.file) {
+      guardianFiles.push(m.file);
+    }
+  });
+  if (guardianFiles.length > 0) {
+    addElement(learnedList, "li",
+      `⚔️ Key files guarded: ${guardianFiles.join(", ")}`
+    );
+  }
+
+  // Boss room
   const bossRoom = state.game.rooms[state.game.boss];
   const bossFolder = bossRoom ? (bossRoom.folder || "README HALL") : state.game.boss;
-  addElement(learnedList, "li", `Reached the boss: ${bossFolder}`);
+  addElement(learnedList, "li", `👑 Boss room: ${bossFolder}`);
+
+  // Exploration summary
+  const totalRooms = Object.keys(state.game.rooms).length;
+  const pct = Math.round((state.visitedRooms.size / totalRooms) * 100);
+  addElement(learnedList, "li",
+    `🗺️ Explored ${state.visitedRooms.size}/${totalRooms} rooms (${pct}% of the dungeon)`
+  );
 
   const btnRow = addElement(card, "div", null, "input-row");
   btnRow.style.marginTop = "20px";
