@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/logo.svg" alt="RepoQuest Logo" width="400">
+</p>
+
 # RepoQuest
 
 **Paste a public GitHub repo. Play it as a text adventure whose rooms, keys, and monsters are built from the repo's real folders, dependencies, and issues. Every repo name the AI writes in backticks or as a path is checked by code.**
@@ -117,6 +121,8 @@ repoquest/
 │   └── index.html          # Single-page HTML shell
 │
 ├── static/
+│   ├── logo.svg            # Vector brand logo
+│   ├── favicon.svg         # 32x32 vector favicon
 │   ├── app.js              # Frontend game engine & DOM renderer
 │   └── style.css           # Terminal green-on-black monospace theme
 │

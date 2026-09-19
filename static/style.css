@@ -26,6 +26,18 @@ body {
   margin: 0 auto;
 }
 
+/* Logo Header */
+.logo-header {
+  margin-bottom: 24px;
+}
+
+.brand-logo {
+  max-width: 360px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* Title */
 h1 {
   font-size: 2.4em;

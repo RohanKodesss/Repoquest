@@ -4,12 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RepoQuest</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div id="app">
-    <h1>RepoQuest</h1>
-    <p class="tagline">Paste a GitHub repo. Play it as a dungeon.</p>
+    <!-- Header Logo -->
+    <header class="logo-header">
+      <img src="/static/logo.svg" alt="RepoQuest Logo" class="brand-logo">
+    </header>
 
     <!-- Screen 1: Start -->
     <div id="start-screen">
@@ -24,7 +27,7 @@
         <button id="check-btn">Check Repo</button>
       </div>
       <p class="hint">
-        Try the demo: <a href="#" id="demo-link">github.com/tiangolo/fastapi</a>
+        Try the demo: <a href="#" id="demo-link">github.com/pallets/flask</a>
       </p>
     </div>
 

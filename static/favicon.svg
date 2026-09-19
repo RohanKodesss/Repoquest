@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="4" fill="#0a0a0a"/>
+  <!-- Terminal / Dungeon Folder Silhouette -->
+  <path d="M 3 6 C 3 4, 4 3, 6 3 L 11 3 L 14 6 L 26 6 C 28 6, 29 7, 29 9 L 29 26 C 29 28, 28 29, 26 29 L 6 29 C 4 29, 3 28, 3 26 Z" fill="none" stroke="#00ff00" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Terminal Prompt '>_' -->
+  <path d="M 9 14 L 14 17.5 L 9 21" fill="none" stroke="#00ff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="16" y1="21" x2="22" y2="21" stroke="#00ff00" stroke-width="2" stroke-linecap="round"/>
+</svg>

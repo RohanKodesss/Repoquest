@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="100%" height="100%">
+  <rect width="400" height="120" rx="8" fill="#0a0a0a"/>
+  
+  <!-- Outer glowing border -->
+  <rect x="4" y="4" width="392" height="112" rx="6" fill="none" stroke="#00ff00" stroke-width="2" stroke-opacity="0.4"/>
+  
+  <!-- Terminal / Dungeon Door Folder Icon -->
+  <g transform="translate(24, 25)">
+    <!-- Folder Silhouette -->
+    <path d="M 0 10 C 0 5, 5 0, 10 0 L 25 0 C 28 0, 30 2, 32 5 L 38 12 L 60 12 C 65 12, 70 17, 70 22 L 70 60 C 70 65, 65 70, 60 70 L 10 70 C 5 70, 0 65, 0 60 Z" fill="none" stroke="#00ff00" stroke-width="3.5" stroke-linejoin="round"/>
+    <!-- Terminal Prompt '>_' inside folder -->
+    <path d="M 18 32 L 30 40 L 18 48" fill="none" stroke="#00ff00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="34" y1="48" x2="48" y2="48" stroke="#00ff00" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Text "RepoQuest" -->
+  <text x="115" y="72" font-family="'Courier New', Courier, monospace" font-size="44" font-weight="bold" fill="#00ff00" letter-spacing="2">RepoQuest</text>
+  
+  <!-- Tagline -->
+  <text x="117" y="94" font-family="'Courier New', Courier, monospace" font-size="12" fill="#00cc88" letter-spacing="1">CODE DECIDES FACTS · AI TELLS THE STORY</text>
+</svg>
