@@ -92,7 +92,7 @@ function renderErrorCard(message, suggestion) {
   clearElement(errorScreen);
   errorScreen.style.display = "block";
   const box = addElement(errorScreen, "div", null, "error-box");
-  addElement(box, "p", f"❌ {message}", "error-msg");
+  addElement(box, "p", `❌ ${message}`, "error-msg");
   if (suggestion) {
     addElement(box, "p", suggestion, "suggestion");
   }
@@ -113,7 +113,7 @@ function renderCheckCard(data) {
 
   const card = addElement(checkScreen, "div", null, "check-card");
   const icon = data.status === "green" ? "✅" : "⚠️";
-  
+
   addElement(card, "div", `${icon} ${data.message}`, `status-line ${data.status}`);
   addElement(card, "div", `${data.owner}/${data.repo} · ${data.language}`, "dim");
   addElement(
@@ -180,6 +180,9 @@ function renderGame() {
   hud.id = "hud";
   addElement(hud, "span", `❤️ ${state.health}`, "red");
   addElement(hud, "span", `⭐ ${state.score}`, "yellow");
+  if (state.inventory.length > 0) {
+    addElement(hud, "span", `🎒 [ ${state.inventory.join(", ")} ]`, "dim");
+  }
 
   // 2. Room Title
   const folder = roomData.folder;
@@ -209,5 +212,52 @@ function renderGame() {
     });
   } else {
     addElement(exitsContainer, "p", "No exits from here.", "dim");
+  }
+
+  // 5. Items Section (Keys)
+  if (roomData.keys && roomData.keys.length > 0) {
+    addElement(gameScreen, "div", "Items here:", "section-label");
+    const itemsContainer = addElement(gameScreen, "div", null, null);
+    roomData.keys.forEach((keyName) => {
+      const keyBtn = addElement(itemsContainer, "button", `📦 ${keyName}`, "btn-secondary");
+      keyBtn.addEventListener("click", () => {
+        // Pick up key: remove from room, add to inventory, +5 score
+        const index = roomData.keys.indexOf(keyName);
+        if (index > -1) {
+          roomData.keys.splice(index, 1);
+        }
+        state.inventory.push(keyName);
+        state.score += 5;
+        renderGame();
+      });
+    });
+  }
+
+  // 6. Monsters Section
+  if (roomData.monsters && roomData.monsters.length > 0) {
+    addElement(gameScreen, "div", "Monsters:", "section-label");
+    const monstersContainer = addElement(gameScreen, "div", null, null);
+    roomData.monsters.forEach((monsterId) => {
+      const monster = state.game.monsters[monsterId];
+      if (!monster) return;
+
+      const card = addElement(monstersContainer, "div", null, "monster-card");
+      
+      const headerText = monster.kind === "issue" 
+        ? `👹 Issue: ${monster.title}`
+        : `👹 ${monster.title}`;
+      
+      addElement(card, "div", headerText, "monster-title");
+      addElement(card, "span", `placed by: ${monster.placed_by}`, "badge");
+
+      if (monster.url) {
+        const link = addElement(card, "a", "[ Open on GitHub ]", "issue-link");
+        link.href = monster.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      } else if (monster.file) {
+        addElement(card, "div", `Guarding: ${monster.file}`, "dim");
+      }
+    });
   }
 }
