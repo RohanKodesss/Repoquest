@@ -408,7 +408,6 @@ function renderBossFightScreen(statusMessage) {
   }
 
   if (!qData) {
-    // If questions finished or missing
     state.score += 50;
     renderEndScreen(true);
     return;
@@ -426,7 +425,6 @@ function renderBossFightScreen(statusMessage) {
       if (optId === qData.answer) {
         state.bossQuestionIndex += 1;
         if (state.bossQuestionIndex >= bossQuestions.length) {
-          // Defeated boss! +50 score
           state.score += 50;
           renderEndScreen(true);
         } else {
@@ -506,3 +504,100 @@ function renderEndScreen(isVictory) {
     clearElement(checkScreen);
   });
 }
+
+/* =========================================================
+   Part 1 — Three.js Animated Background (Fixed canvas #bg)
+   ========================================================= */
+function initThreeBackground() {
+  if (typeof THREE === "undefined") {
+    console.log("Three.js not loaded — skipping background canvas initialization.");
+    return;
+  }
+
+  const canvas = document.getElementById("bg");
+  if (!canvas) return;
+
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  try {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
+
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 15, 30);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Slow rotating wireframe grid (neon green accents)
+    const gridHelper = new THREE.GridHelper(80, 40, 0x00ff00, 0x003300);
+    gridHelper.position.y = -5;
+    scene.add(gridHelper);
+
+    // Drifting particles
+    const particlesCount = 150;
+    const posArray = new Float32Array(particlesCount * 3);
+    for (let i = 0; i < particlesCount * 3; i += 3) {
+      posArray[i] = (Math.random() - 0.5) * 60;
+      posArray[i + 1] = Math.random() * 30 - 5;
+      posArray[i + 2] = (Math.random() - 0.5) * 60;
+    }
+
+    const particlesGeometry = new THREE.BufferGeometry();
+    particlesGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(posArray, 3)
+    );
+
+    const particlesMaterial = new THREE.PointsMaterial({
+      size: 0.5,
+      color: 0x00ff00,
+      transparent: true,
+      opacity: 0.6
+    });
+
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+
+    // Window resize handler
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (prefersReducedMotion) {
+        renderer.render(scene, camera);
+      }
+    });
+
+    // Static frame if reduced motion requested
+    if (prefersReducedMotion) {
+      renderer.render(scene, camera);
+      return;
+    }
+
+    // Animation Loop (60fps target)
+    let animationFrameId;
+    function animate() {
+      animationFrameId = requestAnimationFrame(animate);
+      gridHelper.rotation.y += 0.001;
+      particlesMesh.rotation.y -= 0.0005;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  } catch (err) {
+    console.error("Three.js background error:", err);
+  }
+}
+
+// Initialize Three.js background when DOM loaded
+document.addEventListener("DOMContentLoaded", () => {
+  initThreeBackground();
+});

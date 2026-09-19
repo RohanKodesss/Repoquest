@@ -21,9 +21,22 @@ body {
   padding: 40px 20px;
 }
 
+/* Three.js Canvas Background */
+#bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+
 #app {
   max-width: 800px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 /* Logo Header */
@@ -155,6 +168,7 @@ button.btn-danger:hover {
   padding: 16px 20px;
   margin-bottom: 20px;
   max-width: 480px;
+  background: rgba(10, 10, 10, 0.85);
 }
 
 .check-card .status-line {
@@ -213,6 +227,7 @@ button.btn-danger:hover {
   padding: 12px 16px;
   margin: 8px 0;
   max-width: 600px;
+  background: rgba(10, 10, 10, 0.85);
 }
 
 .monster-title {
@@ -248,6 +263,7 @@ button.btn-danger:hover {
   border: 1px solid #ff4444;
   padding: 16px 20px;
   margin-bottom: 16px;
+  background: rgba(10, 10, 10, 0.85);
 }
 
 /* ---- End screen ---- */
@@ -255,6 +271,7 @@ button.btn-danger:hover {
   border: 1px solid #00ff00;
   padding: 20px 24px;
   max-width: 480px;
+  background: rgba(10, 10, 10, 0.85);
 }
 
 .end-card h2 {
@@ -280,6 +297,7 @@ button.btn-danger:hover {
   border: 1px solid #ff4444;
   padding: 14px 18px;
   max-width: 480px;
+  background: rgba(10, 10, 10, 0.85);
 }
 
 .error-box .error-msg {
