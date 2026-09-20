@@ -173,12 +173,23 @@ if (checkBtn) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       });
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await res.json()
+        : { message: "The server returned an invalid response." };
+      if (!res.ok) {
+        renderCheckCard({
+          status: "red",
+          message: data.message || `Server error (${res.status}).`,
+          suggestion: "Check the Vercel function logs and try again."
+        });
+        return;
+      }
       renderCheckCard(data);
     } catch (err) {
       console.error("Fetch error:", err);
       clearElement(checkScreen);
-      renderErrorCard("Cannot reach server", "Check your connection.");
+      renderErrorCard("Cannot reach server", "The API request failed before a response was received.");
     }
   });
 }

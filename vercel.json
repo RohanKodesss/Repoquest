@@ -2,8 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "functions": {
-    "app.py": {
+    "api/*.py": {
       "maxDuration": 60,
+      "includeFiles": "{modules/**,cache/**}",
       "excludeFiles": "{tests/**,**/*.test.py,**/test_*.py}"
     }
   }
