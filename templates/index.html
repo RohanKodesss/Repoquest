@@ -30,11 +30,12 @@
           placeholder="github.com/owner/repo"
           autocomplete="off"
           spellcheck="false"
+          autofocus
         >
         <button id="check-btn">Check Repo</button>
       </div>
       <p class="hint">
-        Try the demo: <a href="#" id="demo-link">github.com/pallets/flask</a>
+        <a href="#" id="demo-link" class="demo-chip">Try the Flask demo</a>
       </p>
     </div>
 
@@ -50,7 +51,7 @@
     <div id="error-screen" style="display:none;" aria-live="assertive"></div>
 
     <!-- Screen 3: Game -->
-    <div id="game-screen" style="display:none;"></div>
+    <div id="game-screen" style="display:none;" aria-live="polite"></div>
 
     <!-- Screen 4/5: Fight (monster and boss) -->
     <div id="fight-screen" style="display:none;"></div>

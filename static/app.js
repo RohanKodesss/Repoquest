@@ -16,6 +16,9 @@ const state = {
   inventory: [],
   visitedRooms: new Set(),
   defeatedMonsters: 0,
+  defeatedMonsterIds: new Set(),
+  quizCorrect: 0,
+  quizTotal: 0,
   bossQuestionIndex: 0,
   currentUrl: ""
 };
@@ -137,6 +140,10 @@ function clearElement(el) {
   el.textContent = "";
 }
 
+function normalizeRepoUrl(value) {
+  return value.trim().replace(/\/+$/, "").replace(/\.git$/, "");
+}
+
 // Hide all screen divs
 function hideAllScreens() {
   startScreen.style.display = "none";
@@ -153,18 +160,27 @@ if (demoLink) {
   demoLink.addEventListener("click", (e) => {
     e.preventDefault();
     repoUrlInput.value = "github.com/pallets/flask";
+    repoUrlInput.focus();
   });
 }
 
+repoUrlInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") checkBtn.click();
+});
+repoUrlInput.addEventListener("input", () => checkBtn.classList.remove("btn-secondary"));
+
 if (checkBtn) {
   checkBtn.addEventListener("click", async () => {
-    const url = repoUrlInput.value.trim();
+    const url = normalizeRepoUrl(repoUrlInput.value);
     if (!url) return;
+    repoUrlInput.value = url;
     state.currentUrl = url;
 
     clearElement(checkScreen);
     checkScreen.style.display = "block";
-    addElement(checkScreen, "p", "Checking repository...", "dim");
+    const progress = addElement(checkScreen, "div", null, "check-progress");
+    addElement(progress, "p", "Checking repository", "status-line");
+    addElement(progress, "p", "1. Format  →  2. Exists  →  3. Playable", "meta");
     animateScreen(checkScreen);
 
     try {
@@ -220,16 +236,19 @@ function renderCheckCard(data) {
   }
 
   const card = addElement(checkScreen, "div", null, "check-card");
-  const icon = data.status === "green" ? "✅" : "⚠️";
-
-  addElement(card, "div", `${icon} ${data.message}`, `status-line ${data.status}`);
-  addElement(card, "div", `${data.owner}/${data.repo} · ${data.language}`, "dim");
-  addElement(
-    card,
-    "div",
-    `${data.rooms} rooms · ${data.monsters} monsters · ${data.keys} keys`,
-    "counts"
-  );
+  checkBtn.classList.add("btn-secondary");
+  const isReady = data.status === "green";
+  addElement(card, "div", isReady ? "● Ready to play" : "▲ Ready to play (simplified)", `status-badge ${data.status}`);
+  const identity = addElement(card, "div", null, "repo-identity");
+  addElement(identity, "strong", `${data.owner}/${data.repo}`);
+  addElement(identity, "span", data.language || "Unknown", "language-chip");
+  const stats = addElement(card, "div", null, "stat-grid");
+  [[data.rooms, "Rooms"], [data.monsters, "Monsters"], [data.keys, "Keys"]].forEach(([value, label]) => {
+    const tile = addElement(stats, "div", null, "stat-tile");
+    addElement(tile, "strong", String(value));
+    addElement(tile, "span", label);
+  });
+  addElement(card, "p", isReady ? "Green means the repository is ready to explore." : "Amber means it is playable with a simplified game map.", "meta");
 
   if (data.warnings && data.warnings.length > 0) {
     const warnBox = addElement(card, "div", null, "warnings");
@@ -238,7 +257,7 @@ function renderCheckCard(data) {
     });
   }
 
-  const startBtn = addElement(card, "button", "Start Game");
+  const startBtn = addElement(card, "button", "Start Game", "primary-action");
   startBtn.addEventListener("click", () => startGame(state.currentUrl));
 }
 
@@ -269,6 +288,9 @@ async function startGame(url) {
     state.inventory = [];
     state.visitedRooms = new Set([state.currentRoom]);
     state.defeatedMonsters = 0;
+    state.defeatedMonsterIds = new Set();
+    state.quizCorrect = 0;
+    state.quizTotal = 0;
     state.bossQuestionIndex = 0;
 
     hideAllScreens();
@@ -301,6 +323,7 @@ function renderGame() {
   hud.id = "hud";
   addElement(hud, "span", `❤️ ${state.health}`, "red");
   addElement(hud, "span", `⭐ ${state.displayedScore}`, "yellow");
+  addElement(hud, "span", `◈ ${state.visitedRooms.size}/${Object.keys(state.game.rooms).length} explored`, "meta");
   if (state.inventory.length > 0) {
     addElement(hud, "span", `🎒 [ ${state.inventory.join(", ")} ]`, "dim");
   }
@@ -451,8 +474,11 @@ function renderFightScreen(monsterId, statusMessage) {
     const optBtn = addElement(optsContainer, "button", optLabel, "btn-secondary");
 
     optBtn.addEventListener("click", () => {
+      state.quizTotal += 1;
       if (optId === qData.answer) {
         state.defeatedMonsters += 1;
+        state.defeatedMonsterIds.add(monsterId);
+        state.quizCorrect += 1;
         updateScore(10);
         const currentRoomData = state.game.rooms[state.currentRoom];
         if (currentRoomData && currentRoomData.monsters) {
@@ -537,7 +563,9 @@ function renderBossFightScreen(statusMessage) {
     const optBtn = addElement(optsContainer, "button", optFolder, "btn-secondary");
 
     optBtn.addEventListener("click", () => {
+      state.quizTotal += 1;
       if (optId === qData.answer) {
+        state.quizCorrect += 1;
         state.bossQuestionIndex += 1;
         if (state.bossQuestionIndex >= bossQuestions.length) {
           updateScore(50);
@@ -589,34 +617,26 @@ function renderEndScreen(isVictory) {
   addElement(card, "div", "What you learned:", "section-label");
   const learnedList = addElement(card, "ul", null, "learned");
 
-  // Explain the project's purpose in plain English. Repository metadata is
-  // intentionally used here instead of rooms, folders, or file paths.
+  // End summaries intentionally differ: victory records completed learning;
+  // defeat identifies the next useful step from the player's real state.
   const description = (state.game.description || "").trim();
-  if (description) {
+  if (isVictory && description) {
     addElement(learnedList, "li", `💡 What this project does: ${description}`);
-  } else if (state.game.language && state.game.language !== "Unknown") {
-    addElement(learnedList, "li", `💡 This is a ${state.game.language} project. You explored how its main parts work together.`);
-  } else {
-    addElement(learnedList, "li", "💡 You explored how this project's main parts work together.");
-  }
-
-  if (state.game.language && state.game.language !== "Unknown") {
-    addElement(learnedList, "li", `💻 It is mainly built with ${state.game.language}.`);
   }
 
   const totalRooms = Object.keys(state.game.rooms || {}).length;
   const exploredCount = state.visitedRooms.size;
   const pct = totalRooms ? Math.round((exploredCount / totalRooms) * 100) : 0;
-  addElement(learnedList, "li",
-    `🗺️ You explored ${exploredCount} of ${totalRooms} parts of the project (${pct}%), building a picture of how it is organised.`
-  );
+  addElement(learnedList, "li", isVictory
+    ? `🗺️ You explored ${exploredCount} of ${totalRooms} areas (${pct}%).`
+    : `◌ You explored ${exploredCount} of ${totalRooms} areas (${pct}%). ${totalRooms - exploredCount} remain to discover.`);
 
   // Keep implementation details out of the recap; counts still make the
   // learning progress clear without exposing dependency or file names.
   if (state.inventory.length > 0) {
-    addElement(learnedList, "li",
-      `🔑 You identified ${state.inventory.length} external tool${state.inventory.length === 1 ? "" : "s"} this project relies on.`
-    );
+    addElement(learnedList, "li", `🔑 Keys collected: ${state.inventory.join(", ")}. These are external tools the project depends on.`);
+  } else if (!isVictory) {
+    addElement(learnedList, "li", "◌ No dependency keys were collected yet.");
   }
 
   // Describe project challenges without repeating issue titles, which can
@@ -629,8 +649,22 @@ function renderEndScreen(isVictory) {
     }
   });
   if (issueCount > 0) {
-    addElement(learnedList, "li", `🐛 You saw ${issueCount} open challenge${issueCount === 1 ? "" : "s"} the team is working through.`);
+    addElement(learnedList, "li", `${isVictory ? "✓" : "◌"} Monsters defeated: ${state.defeatedMonsters} of ${issueCount} open issue${issueCount === 1 ? "" : "s"}.`);
   }
+
+  state.defeatedMonsterIds.forEach((monsterId) => {
+    const monster = state.game.monsters[monsterId];
+    if (!monster) return;
+    const row = addElement(learnedList, "li", null, "completion-link");
+    if (monster.url) {
+      const link = addElement(row, "a", `View defeated issue: ${monster.title}`, "issue-link");
+      link.href = monster.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    } else {
+      addElement(row, "span", `Defeated guardian: ${monster.file || monster.title}`);
+    }
+  });
 
   let guardianCount = 0;
   Object.keys(state.game.monsters || {}).forEach(mId => {
@@ -639,18 +673,25 @@ function renderEndScreen(isVictory) {
       guardianCount++;
     }
   });
-  if (guardianCount > 0) {
+  if (guardianCount > 0 && isVictory) {
     addElement(learnedList, "li",
       `⚔️ You examined ${guardianCount} substantial part${guardianCount === 1 ? "" : "s"} of the codebase.`
     );
   }
 
-  addElement(learnedList, "li", "👑 You reached one of the project's most substantial areas and completed the learning journey.");
+  const bossRoom = state.game.rooms[state.game.boss];
+  if (isVictory) {
+    addElement(learnedList, "li", `👑 Boss completed: ${bossRoom ? "the largest code area" : "the final challenge"}, chosen from the repository's biggest file.`);
+  } else {
+    addElement(learnedList, "li", "◌ The boss and remaining quizzes are still ahead. Retry to continue from the entrance.");
+  }
+  addElement(learnedList, "li", `${isVictory ? "✓" : "◌"} Quiz accuracy: ${state.quizCorrect} correct out of ${state.quizTotal} answered.`);
+  addElement(learnedList, "li", `★ Score ${state.score}: ${state.inventory.length * 5} from keys, ${state.defeatedMonsters * 10} from monsters, ${isVictory ? "50 from the boss" : "0 from the boss"}.`);
 
   const btnRow = addElement(card, "div", null, "input-row");
   btnRow.style.marginTop = "20px";
 
-  const againBtn = addElement(btnRow, "button", "Play Again");
+  const againBtn = addElement(btnRow, "button", isVictory ? "Play Again" : "Retry", "primary-action");
   againBtn.addEventListener("click", () => {
     state.currentRoom = state.game.start || "readme-hall";
     state.health = 100;
@@ -659,6 +700,9 @@ function renderEndScreen(isVictory) {
     state.inventory = [];
     state.visitedRooms = new Set([state.currentRoom]);
     state.defeatedMonsters = 0;
+    state.defeatedMonsterIds = new Set();
+    state.quizCorrect = 0;
+    state.quizTotal = 0;
     state.bossQuestionIndex = 0;
     hideAllScreens();
     gameScreen.style.display = "block";
@@ -755,6 +799,7 @@ function initThreeBackground() {
     let animationFrameId;
     function animate() {
       animationFrameId = requestAnimationFrame(animate);
+      if (document.hidden) return;
       gridHelper.rotation.y += 0.001;
       particlesMesh.rotation.y -= 0.0005;
       renderer.render(scene, camera);
