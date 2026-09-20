@@ -795,13 +795,8 @@ function initThreeBackground() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Slow rotating wireframe grid (neon green accents)
-    const gridHelper = new THREE.GridHelper(80, 40, 0x006b1d, 0x001608);
-    gridHelper.position.y = -5;
-    scene.add(gridHelper);
-
     // Drifting particles
-    const particlesCount = 150;
+    const particlesCount = 105;
     const posArray = new Float32Array(particlesCount * 3);
     for (let i = 0; i < particlesCount * 3; i += 3) {
       posArray[i] = (Math.random() - 0.5) * 60;
@@ -816,8 +811,8 @@ function initThreeBackground() {
     );
 
     const particlesMaterial = new THREE.PointsMaterial({
-      size: 0.5,
-      color: 0x00ff00,
+      size: 0.35,
+      color: 0x34d399,
       transparent: true,
       opacity: 0.2
     });
@@ -846,7 +841,6 @@ function initThreeBackground() {
     function animate() {
       animationFrameId = requestAnimationFrame(animate);
       if (document.hidden) return;
-      gridHelper.rotation.y += 0.001;
       particlesMesh.rotation.y -= 0.0005;
       renderer.render(scene, camera);
     }
