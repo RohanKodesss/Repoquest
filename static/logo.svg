@@ -17,5 +17,5 @@
   <text x="115" y="72" font-family="'Courier New', Courier, monospace" font-size="44" font-weight="bold" fill="#00ff00" letter-spacing="2">RepoQuest</text>
   
   <!-- Tagline -->
-  <text x="117" y="94" font-family="'Courier New', Courier, monospace" font-size="12" fill="#00cc88" letter-spacing="1">CODE DECIDES FACTS · AI TELLS THE STORY</text>
+  <text x="242" y="94" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="10.5" fill="#00cc88" letter-spacing="0.6">CODE DECIDES FACTS · AI TELLS THE STORY</text>
 </svg>

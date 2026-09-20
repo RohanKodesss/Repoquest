@@ -1,65 +1,84 @@
-# RepoQuest — 90-Second Stage Script
+# RepoQuest Demo Script
 
-**Target Time:** 90 seconds  
-**Driver:** You drive. Do not hand over the keyboard during the pitch.  
-**Primary Demo URL:** `github.com/pallets/flask`
+**Target:** 90 seconds
 
----
+**Demo repository:** `github.com/pallets/flask`
+**Goal:** Show that RepoQuest makes codebase exploration engaging without
+letting AI invent repository facts.
 
-## 1. Pitch (15s)
-> "Onboarding to an unfamiliar codebase is slow, boring, and overwhelming. We turned it into a playable game.  
-> The core principle: **Code decides facts. AI tells the story.**  
-> Every room is a real folder, every monster is a real open issue, and the AI is physically incapable of hallucinating a file name."
+> Keep the demo conversational. Exact room, issue, and key counts can change
+> as the source repository changes, so describe what appears instead of relying
+> on fixed numbers.
 
----
+## 1. Set the problem — 15 seconds
 
-## 2. Show a Bad URL (10s)
-1. Type `github.com/notreal/notreal` in the input box.
-2. Click **Check Repo**.
-3. **Show the Red Error Card:**  
-   > *"Repo not found or private. Public repos only."*
-4. Point out: *"We validate format and existence before building anything."*
+> “A new codebase can be overwhelming: a README tells you what a project is,
+> but not where to start or how the parts connect. RepoQuest turns that first
+> exploration into a playable learning journey.”
 
----
+> “The important rule is simple: code decides facts; AI only tells the story.”
 
-## 3. Show a Real Repo (10s)
-1. Click the demo link or paste `github.com/pallets/flask` (with the `github.com/` prefix).
-2. Click **Check Repo**.
-3. **Show the Green/Yellow Scan Card:**  
-   > *"Playable. 12 rooms, 1 monsters, 0 keys."*
-4. Point out: *"Built deterministically from GitHub's tree and issue data."*
+## 2. Prove the guardrails — 10 seconds
 
----
+1. Enter `github.com/notreal/notreal`.
+2. Select **Check Repo**.
+3. Show the red error card.
 
-## 4. Play 3 Rooms & Fight a Monster (30s)
-1. Click **Start Game**.
-2. **Room 1 (README Hall):** Show room title, template/AI narration text, and exits.
-3. Click exit: **`→ src/flask`**.
-4. Click exit: **`→ tests`**.
-5. Click **Fight Monster** on `Issue #6146: Add Cloudflare to Flask Hosting Platforms docs?`.
-6. Click **`[ Open on GitHub ]`** to open the real GitHub issue in a new tab.
-7. Answer the quiz question correctly (**`room-docs`**).
-8. Show score incrementing by **+10** and the monster disappearing.
+> “We validate the input and repository existence before we build anything.
+> Private and missing repositories do not become fictional dungeons.”
 
----
+## 3. Build a real game — 15 seconds
 
-## 5. Show Proof (15s)
-1. Open terminal tab alongside browser.
-2. Run:
-   ```bash
-   python -m pytest tests/test_validator.py -v
-   ```
-3. Show all 5 tests passing:  
-   > *"Our validator extracts every backticked token and path-like token and checks it against a set of everything real in the repository. Fake names trigger plain template fallback."*
+1. Enter `github.com/pallets/flask` or choose the demo link.
+2. Select **Check Repo**.
+3. Point to the traffic-light result, room count, and any warnings.
 
----
+> “The map is created from the actual GitHub tree, dependencies, and open
+> issues. No model chooses the rooms or invents monsters.”
 
-## 6. Close (10s)
-> "Every room is a real folder. Every monster is a real issue. The game plays offline, works without AI, and no hallucinated filename can survive. Thank you!"
+## 4. Play the learning flow — 30 seconds
 
----
+1. Select **Start Game**.
+2. Visit two or three rooms using the exits.
+3. Collect a key if the game shows one.
+4. Open an issue monster and use its GitHub link when available.
+5. Answer a quiz question and show the score update.
+6. Reach the boss when the route allows it.
 
-## Backup Plan
-- **Wi-Fi Dies during demo:** The pre-cached file `cache/pallets-flask.json` loads instantly and plays offline without AI or network access.
-- **App Crashes:** Play `demo_backup.mp4`.
-- **Judge asks to try:** Hand over keyboard AFTER the pitch is complete.
+> “The game turns exploration into feedback. You do not just read a folder
+> tree—you form a mental model, test it, and make progress.”
+
+## 5. Show the trust boundary — 10 seconds
+
+Open `tests/test_validator.py` or run:
+
+```bash
+python -m pytest tests/test_validator.py -v
+```
+
+> “Narration may be creative, but names are not trusted. Backticked names and
+> path-like tokens are checked against the repository. A failed validation gets
+> one retry, then safe template text.”
+
+## 6. End with the learning recap — 10 seconds
+
+Finish or intentionally end the run to show **What you learned**.
+
+> “The recap explains what the project does and what you explored in plain
+> English. It does not make a beginner decode a list of internal file paths.”
+
+> “RepoQuest makes the first ten minutes of onboarding active, memorable, and
+> verifiable.”
+
+## Demo resilience
+
+| Situation | What to do |
+|---|---|
+| Gemini is unavailable | Continue—the template narrator keeps the game playable. |
+| GitHub rate limit is reached | Use an included demo repository or set `GITHUB_TOKEN`. |
+| A Vercel instance is cold | Start Game rebuilds a missing temporary map automatically. |
+| Network is unavailable locally | Use a bundled demo map that has already been checked. |
+
+Before presenting, run the test command once and open the app in the target
+browser. Do not promise a specific issue, folder, or count from an external
+repository; those facts naturally change over time.

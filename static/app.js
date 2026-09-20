@@ -578,75 +578,63 @@ function renderEndScreen(isVictory) {
   addElement(card, "div", "What you learned:", "section-label");
   const learnedList = addElement(card, "ul", null, "learned");
 
-  // Repo identity
-  if (state.game.repo) {
-    addElement(learnedList, "li", `📦 Repo: ${state.game.repo}`);
+  // Explain the project's purpose in plain English. Repository metadata is
+  // intentionally used here instead of rooms, folders, or file paths.
+  const description = (state.game.description || "").trim();
+  if (description) {
+    addElement(learnedList, "li", `💡 What this project does: ${description}`);
+  } else if (state.game.language && state.game.language !== "Unknown") {
+    addElement(learnedList, "li", `💡 This is a ${state.game.language} project. You explored how its main parts work together.`);
+  } else {
+    addElement(learnedList, "li", "💡 You explored how this project's main parts work together.");
   }
+
   if (state.game.language && state.game.language !== "Unknown") {
-    addElement(learnedList, "li", `💻 Primary language: ${state.game.language}`);
+    addElement(learnedList, "li", `💻 It is mainly built with ${state.game.language}.`);
   }
 
-  // Folders explored (real folder paths from visited rooms)
-  const exploredFolders = [];
-  state.visitedRooms.forEach(roomId => {
-    const room = state.game.rooms[roomId];
-    if (room) {
-      const folderName = room.folder || "(root)";
-      exploredFolders.push(folderName);
-    }
-  });
-  if (exploredFolders.length > 0) {
-    addElement(learnedList, "li",
-      `📂 Explored ${exploredFolders.length} folder${exploredFolders.length === 1 ? "" : "s"}: ${exploredFolders.join(", ")}`
-    );
-  }
+  const totalRooms = Object.keys(state.game.rooms || {}).length;
+  const exploredCount = state.visitedRooms.size;
+  const pct = totalRooms ? Math.round((exploredCount / totalRooms) * 100) : 0;
+  addElement(learnedList, "li",
+    `🗺️ You explored ${exploredCount} of ${totalRooms} parts of the project (${pct}%), building a picture of how it is organised.`
+  );
 
-  // Dependencies collected (real package names from inventory)
+  // Keep implementation details out of the recap; counts still make the
+  // learning progress clear without exposing dependency or file names.
   if (state.inventory.length > 0) {
     addElement(learnedList, "li",
-      `🔑 Dependencies discovered: ${state.inventory.join(", ")}`
+      `🔑 You identified ${state.inventory.length} external tool${state.inventory.length === 1 ? "" : "s"} this project relies on.`
     );
   }
 
-  // Issues encountered (real issue titles from defeated monsters)
-  const issuesTitles = [];
+  // Describe project challenges without repeating issue titles, which can
+  // contain implementation-specific names and paths.
+  let issueCount = 0;
   Object.keys(state.game.monsters || {}).forEach(mId => {
     const m = state.game.monsters[mId];
-    if (m && m.kind === "issue" && m.title) {
-      issuesTitles.push(m.title);
+    if (m && m.kind === "issue") {
+      issueCount++;
     }
   });
-  if (issuesTitles.length > 0) {
-    const shown = issuesTitles.slice(0, 5);
-    const label = `🐛 Issues in this repo: ${shown.join("; ")}`;
-    addElement(learnedList, "li", label + (issuesTitles.length > 5 ? ` (+${issuesTitles.length - 5} more)` : ""));
+  if (issueCount > 0) {
+    addElement(learnedList, "li", `🐛 You saw ${issueCount} open challenge${issueCount === 1 ? "" : "s"} the team is working through.`);
   }
 
-  // Guardian files (if no issues, show file-based monsters)
-  const guardianFiles = [];
+  let guardianCount = 0;
   Object.keys(state.game.monsters || {}).forEach(mId => {
     const m = state.game.monsters[mId];
-    if (m && m.kind === "guardian" && m.file) {
-      guardianFiles.push(m.file);
+    if (m && m.kind === "guardian") {
+      guardianCount++;
     }
   });
-  if (guardianFiles.length > 0) {
+  if (guardianCount > 0) {
     addElement(learnedList, "li",
-      `⚔️ Key files guarded: ${guardianFiles.join(", ")}`
+      `⚔️ You examined ${guardianCount} substantial part${guardianCount === 1 ? "" : "s"} of the codebase.`
     );
   }
 
-  // Boss room
-  const bossRoom = state.game.rooms[state.game.boss];
-  const bossFolder = bossRoom ? (bossRoom.folder || "README HALL") : state.game.boss;
-  addElement(learnedList, "li", `👑 Boss room: ${bossFolder}`);
-
-  // Exploration summary
-  const totalRooms = Object.keys(state.game.rooms).length;
-  const pct = Math.round((state.visitedRooms.size / totalRooms) * 100);
-  addElement(learnedList, "li",
-    `🗺️ Explored ${state.visitedRooms.size}/${totalRooms} rooms (${pct}% of the dungeon)`
-  );
+  addElement(learnedList, "li", "👑 You reached one of the project's most substantial areas and completed the learning journey.");
 
   const btnRow = addElement(card, "div", null, "input-row");
   btnRow.style.marginTop = "20px";

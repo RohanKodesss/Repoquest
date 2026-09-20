@@ -20,6 +20,53 @@ def _error_response(error_code: str, message: str, status_code: int, suggestion:
     return jsonify(payload), status_code
 
 
+class GameBuildError(Exception):
+    """A user-safe error encountered while turning a repository into a map."""
+
+    def __init__(self, error_code: str, message: str, status_code: int):
+        super().__init__(message)
+        self.error_code = error_code
+        self.message = message
+        self.status_code = status_code
+
+
+def _build_game(owner: str, repo: str) -> dict:
+    """Fetch a repository and build its deterministic map without persistence."""
+    repo_info = github_fetch.fetch_repo_info(owner, repo)
+    branch = repo_info.get("default_branch", "main")
+    tree, is_truncated = github_fetch.fetch_tree(owner, repo, branch)
+    readme = github_fetch.fetch_readme(owner, repo)
+    issues = github_fetch.fetch_issues(owner, repo)
+    dependencies, dep_filename = github_fetch.fetch_dependency_file(owner, repo)
+
+    ok, warnings, error_info = repo_check.playability_check(tree, issues, dependencies)
+    if not ok and error_info:
+        raise GameBuildError(*error_info)
+    if is_truncated:
+        warnings.append("Repo file tree was truncated by GitHub API; dungeon built from available files.")
+
+    try:
+        game = map_builder.build_map({
+            "owner": owner,
+            "repo": repo,
+            "language": repo_info.get("language", "Unknown") or "Unknown",
+            "description": repo_info.get("description") or "",
+            "readme": readme,
+            "tree": tree,
+            "issues": issues,
+            "dependencies": dependencies or [],
+            "dep_filename": dep_filename,
+            "warnings": warnings,
+        })
+    except ValueError as err:
+        raise GameBuildError(
+            "map_failed", "Couldn't build a dungeon for this repo. Try another one.", 422
+        ) from err
+
+    game["_tree_paths"] = [item["path"] for item in tree if "path" in item]
+    return game
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -183,11 +230,15 @@ def start_game():
     game = cache.load(owner, repo)
 
     if game is None:
-        return _error_response(
-            "not_checked",
-            "Check the repo first.",
-            409
-        )
+        # A new Vercel function instance has an empty /tmp. Rebuild so the
+        # second request still succeeds instead of relying on server memory.
+        try:
+            game = _build_game(owner, repo)
+            cache.save(owner, repo, game)
+        except github_fetch.GitHubFetchError as err:
+            return _error_response(err.error_code, err.message, err.status_code)
+        except GameBuildError as err:
+            return _error_response(err.error_code, err.message, err.status_code)
 
     tree_paths = game.get("_tree_paths", [])
 

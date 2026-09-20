@@ -279,6 +279,9 @@ def build_map(repo_data: dict) -> dict:
     game_map = {
         "repo": f"{repo_data.get('owner', '')}/{repo_data.get('repo', '')}".strip("/"),
         "language": repo_data.get("language", "Unknown"),
+        # GitHub's repository description is the user-facing explanation of
+        # purpose. Keep it separate from internal paths used to build the map.
+        "description": repo_data.get("description", ""),
         "warnings": repo_data.get("warnings", []),
         "start": "readme-hall",
         "boss": boss_room_id,

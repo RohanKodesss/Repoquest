@@ -9,13 +9,26 @@ A missing, empty, or corrupt file returns None (triggers a rebuild).
 from __future__ import annotations
 import json
 import os
+from pathlib import Path
 
-CACHE_DIR = "cache"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+BUNDLED_CACHE_DIR = PROJECT_ROOT / "cache"
+
+# Vercel mounts the deployment read-only. /tmp is writable but ephemeral, so it
+# is used only as a best-effort runtime cache in production.
+if os.getenv("VERCEL"):
+    CACHE_DIR = Path(os.getenv("REPOQUEST_CACHE_DIR", "/tmp/repoquest-cache"))
+else:
+    CACHE_DIR = BUNDLED_CACHE_DIR
 
 
-def _path(owner: str, repo: str) -> str:
+def _filename(owner: str, repo: str) -> str:
     """Build the cache file path from validated owner and repo strings."""
-    return os.path.join(CACHE_DIR, f"{owner}-{repo}.json")
+    return f"{owner}-{repo}.json"
+
+
+def _path(owner: str, repo: str) -> Path:
+    return CACHE_DIR / _filename(owner, repo)
 
 
 def load(owner: str, repo: str) -> dict | None:
@@ -23,15 +36,21 @@ def load(owner: str, repo: str) -> dict | None:
     Return the saved game dict, or None if the file does not exist,
     is empty, or is not valid JSON.
     """
-    try:
-        with open(_path(owner, repo), "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
-        return None
+    paths = [_path(owner, repo)]
+    # Demo games are packaged with the function and survive cold starts.
+    if CACHE_DIR != BUNDLED_CACHE_DIR:
+        paths.append(BUNDLED_CACHE_DIR / _filename(owner, repo))
+    for path in paths:
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            continue
+    return None
 
 
 def save(owner: str, repo: str, game: dict) -> None:
     """Write the game dict to the cache file, creating the folder if needed."""
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    with open(_path(owner, repo), "w", encoding="utf-8") as f:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    with _path(owner, repo).open("w", encoding="utf-8") as f:
         json.dump(game, f, indent=2, ensure_ascii=False)

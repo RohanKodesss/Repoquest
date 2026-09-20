@@ -1,46 +1,47 @@
-# RepoQuest REST API Specification
+# RepoQuest API Reference
 
-**Based on:** Spec v5.1  
-**Revision:** 4 (final)
+RepoQuest exposes a small same-origin JSON API used by the browser game. There
+is no user authentication API: GitHub and Gemini credentials stay on the server
+as environment variables.
 
----
+## Conventions
 
-## 1. Overview and Conventions
-
-| Item | Rule |
+| Item | Value |
 |---|---|
-| **Base URL** | `http://localhost:5000` |
-| **Format** | Requests and responses are JSON, except `GET /` (HTML) |
-| **Request header** | `Content-Type: application/json` on every POST |
-| **Authentication** | None. `GITHUB_TOKEN` and `GEMINI_API_KEY` live in `.env` |
-| **CORS** | Not needed (same-origin Flask server) |
-| **State** | Server is stateless. State saved in `cache/owner-repo.json` |
-| **Error shape** | Standard JSON shape for all API errors |
+| Local base URL | `http://127.0.0.1:5000` |
+| Production base URL | Your Vercel deployment URL |
+| Request format | JSON for `POST` endpoints |
+| Content type | `application/json` |
+| Browser state | Score, inventory, and progress live in the browser |
+| Server cache | Game maps are JSON files; Vercel uses temporary `/tmp` storage |
 
-### Endpoint Summary
-| # | Method | URL | Job |
-|---|---|---|---|
-| 1 | `GET` | `/` | Serves `templates/index.html` |
-| 2 | `POST` | `/api/check` | Validates URL, checks cache, fetches repo data, builds map, returns traffic light |
-| 3 | `POST` | `/api/start` | Adds narration + quiz to saved map, returns full game JSON |
+## Endpoints
 
----
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/` | Returns the game page |
+| `POST` | `/api/check` | Validates a repository and builds or loads its map |
+| `POST` | `/api/start` | Loads or rebuilds a map, adds narration and quizzes, then returns the game |
 
-## 2. Endpoints
+## `POST /api/check`
 
-### 2.1 GET /
-Returns `templates/index.html`.
+Checks a public GitHub repository before the player starts. A cache hit avoids
+external requests; otherwise the service fetches repository metadata, the file
+tree, README, issues, and dependency data before building a connected map.
 
-### 2.2 POST /api/check
+### Request
 
-**Request Body:**
 ```json
 {
   "url": "github.com/owner/repo"
 }
 ```
 
-**Success Response (Green/Yellow - HTTP 200):**
+HTTPS URLs, a `.git` suffix, and repository subpaths are accepted. The owner
+and repository are extracted from the URL; arbitrary URLs are never fetched.
+
+### Success response
+
 ```json
 {
   "status": "green",
@@ -48,133 +49,107 @@ Returns `templates/index.html`.
   "repo": "flask",
   "language": "Python",
   "rooms": 12,
-  "monsters": 1,
+  "monsters": 4,
   "keys": 0,
-  "warnings": ["No dependency file found. This dungeon has no keys."],
-  "message": "Playable. 12 rooms, 1 monsters, 0 keys.",
+  "warnings": [],
+  "message": "Ready. 12 rooms, 4 monsters, 0 keys.",
   "cached": false
 }
 ```
 
-**Cached Response (HTTP 200):**
-```json
-{
-  "status": "green",
-  "owner": "pallets",
-  "repo": "flask",
-  "language": "Python",
-  "rooms": 12,
-  "monsters": 1,
-  "keys": 0,
-  "warnings": [],
-  "message": "Loaded from cache.",
-  "cached": true
-}
-```
+`status` is `green` when the map has no warnings and `yellow` when it is still
+playable but lacks optional data, such as open issues or dependencies.
 
-**Error Responses:**
-- `400 bad_request`: Missing/invalid JSON body
-- `400 bad_format`: Invalid URL pattern
-- `404 repo_not_found`: Repo missing or private
-- `422 empty_repo`: Repo has no files
-- `422 too_small`: Fewer than 5 files or 2 folders
-- `422 map_failed`: Connectivity check failed
-- `429 rate_limited`: GitHub API rate limit hit
-- `502 network_fail`: Cannot reach GitHub
+## `POST /api/start`
 
----
+Returns a complete game object. Call it after `/api/check` for the fastest path.
+If a Vercel cold start has cleared its temporary cache, this endpoint rebuilds
+the map rather than returning a cache-miss error.
 
-### 2.3 POST /api/start
+### Request
 
-**Request Body:**
 ```json
 {
   "url": "github.com/owner/repo"
 }
 ```
 
-**Precondition:** `/api/check` must have succeeded for this repo.  
-**Response (HTTP 200):** Returns the full game object schema.
-
-**Error Responses:**
-- `400 bad_request`: Missing/invalid JSON body
-- `400 bad_format`: Invalid URL pattern
-- `409 not_checked`: No saved map found for repo
-
----
-
-## 3. Game Object Schema
+### Response shape
 
 ```json
 {
   "repo": "owner/repo",
   "language": "Python",
+  "description": "A short plain-English explanation from the repository.",
   "warnings": [],
   "start": "readme-hall",
-  "boss": "room-src-flask",
+  "boss": "room-src",
   "rooms": {
     "readme-hall": {
       "folder": "",
-      "exits": ["room-src-flask"],
+      "exits": ["room-src"],
       "keys": [],
       "monsters": []
-    },
-    "room-src-flask": {
-      "folder": "src/flask",
-      "exits": ["readme-hall"],
-      "keys": [],
-      "monsters": ["issue-6146"]
     }
   },
-  "monsters": {
-    "issue-6146": {
-      "kind": "issue",
-      "title": "Add Cloudflare to Flask Hosting Platforms docs?",
-      "url": "https://github.com/pallets/flask/issues/6146",
-      "placed_by": "keyword",
-      "file": null
-    }
-  },
+  "monsters": {},
   "keys": {},
   "narration": {
-    "rooms": {
-      "readme-hall": "You are in the entrance hall. Look around — exits lead onward.",
-      "room-src-flask": "You are in src/flask. Look around — exits lead onward."
-    },
-    "monsters": {
-      "issue-6146": "A creature blocks the way: Add Cloudflare to Flask Hosting Platforms docs?."
-    },
+    "rooms": {},
+    "monsters": {},
     "keys": {}
   },
   "narrated_by": "template",
   "quiz": {
-    "monsters": {
-      "issue-6146": {
-        "question": "Which room holds `src/flask/__init__.py`?",
-        "options": ["room-src-flask", "readme-hall", "room-tests"],
-        "answer": "room-src-flask"
-      }
-    },
-    "boss": [
-      {
-        "question": "Which room holds `src/flask/app.py`?",
-        "options": ["room-src-flask", "readme-hall"],
-        "answer": "room-src-flask"
-      }
-    ]
+    "monsters": {},
+    "boss": []
   }
 }
 ```
 
----
+### Important response fields
 
-## 4. Standard Error Format
+| Field | Description |
+|---|---|
+| `description` | Repository description used for the plain-English learning recap |
+| `rooms` | Connected game areas, each with exits, keys, and monsters |
+| `monsters` | Open issues or guardian fallback encounters |
+| `keys` | Dependencies collected during play |
+| `narration` | Verified Gemini prose or safe template text |
+| `narrated_by` | `llm`, `mixed`, or `template` |
+| `quiz` | Question sets derived from real map facts |
+
+Internal fields prefixed with `_` may be present for validation and caching.
+Clients should treat them as implementation details.
+
+## Error format
+
+All handled API failures use the following shape:
 
 ```json
 {
   "status": "red",
   "error": "error_code",
-  "message": "Human readable error description",
-  "suggestion": "Optional suggestion text"
+  "message": "Human-readable explanation.",
+  "suggestion": "Optional next step."
 }
 ```
+
+| HTTP status | Error code | Meaning |
+|---:|---|---|
+| 400 | `bad_request` | The body is missing or does not contain a string `url` |
+| 400 | `bad_format` | The URL is not a supported GitHub repository URL |
+| 404 | `repo_not_found` | The repository is missing or private |
+| 422 | `empty_repo` | The repository has no usable file tree |
+| 422 | `too_small` | The repository has fewer than five files or two folders |
+| 422 | `map_failed` | A connected game map could not be created |
+| 429 | `rate_limited` | GitHub rejected the request because of rate limiting |
+| 502 | `network_fail` | GitHub could not be reached or returned an unexpected response |
+
+## Operational notes
+
+- `GITHUB_TOKEN` is recommended to reduce rate-limit failures.
+- `GEMINI_API_KEY` is optional. Without it, `narrated_by` is `template` and
+  game play continues.
+- Vercel’s `/tmp` cache is not durable. Build a database-backed cache before
+  relying on a game map across long periods, regions, or users.
