@@ -16,14 +16,20 @@
   <canvas id="bg"></canvas>
 
   <div id="app">
-    <!-- Header Logo -->
     <header class="logo-header">
-      <img src="/static/logo.svg" alt="RepoQuest Logo" class="brand-logo">
+      <div class="brand-lockup" aria-label="RepoQuest">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><path d="M5 12a5 5 0 0 1 5-5h10l5 5h13a5 5 0 0 1 5 5v20a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5Z"/><path d="m16 22 6 5-6 5m10 0h7"/></svg>
+        <h1>RepoQuest</h1>
+      </div>
+      <p class="brand-kicker">Code decides facts · AI tells the story</p>
+      <p class="brand-description">Paste a public GitHub repo. Play it as a dungeon built from its real code, and finish knowing how it fits together.</p>
     </header>
 
-    <!-- Screen 1: Start -->
     <div id="start-screen">
-      <div class="input-row">
+      <form id="repo-form" novalidate>
+        <label class="sr-only" for="repo-url">GitHub repository URL</label>
+        <div class="input-row">
+          <span class="input-prompt" aria-hidden="true">$</span>
         <input
           type="text"
           id="repo-url"
@@ -32,11 +38,15 @@
           spellcheck="false"
           autofocus
         >
-        <button id="check-btn">Check Repo</button>
-      </div>
-      <p class="hint">
-        <a href="#" id="demo-link" class="demo-chip">Try the Flask demo</a>
-      </p>
+        <button type="button" id="check-btn">Check Repo</button>
+        </div>
+        <p id="url-error" class="inline-error" role="alert" hidden></p>
+      </form>
+      <button type="button" id="demo-link" class="demo-chip">Try the Flask demo</button>
+      <section id="mapping-strip" class="mapping-strip" aria-label="How RepoQuest maps code to a game">
+        <div><span>▣</span> Folders → Rooms</div><div><span>◇</span> Dependencies → Keys</div><div><span>◉</span> Issues → Monsters</div>
+        <p>Every room, key, and monster is read from the repo. AI only tells the story.</p>
+      </section>
     </div>
 
     <!-- Screen 2: Repo Check Card -->

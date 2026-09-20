@@ -34,6 +34,9 @@ const endScreen = document.getElementById("end-screen");
 const repoUrlInput = document.getElementById("repo-url");
 const checkBtn = document.getElementById("check-btn");
 const demoLink = document.getElementById("demo-link");
+const repoForm = document.getElementById("repo-form");
+const urlError = document.getElementById("url-error");
+const mappingStrip = document.getElementById("mapping-strip");
 
 /* =========================================================
    GSAP & Polish Animation Helpers
@@ -141,7 +144,23 @@ function clearElement(el) {
 }
 
 function normalizeRepoUrl(value) {
-  return value.trim().replace(/\/+$/, "").replace(/\.git$/, "");
+  let text = value.trim();
+  if (/^[\w.-]+\/[\w.-]+(?:\/.*)?$/.test(text) && !text.includes(".")) text = `github.com/${text}`;
+  const match = text.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)(?:\.git)?(?:\/.*)?(?:[?#].*)?$/i);
+  return match ? `github.com/${match[1]}/${match[2].replace(/\.git$/i, "")}` : null;
+}
+
+function showUrlError(message) {
+  repoUrlInput.setAttribute("aria-invalid", "true");
+  repoUrlInput.setAttribute("aria-describedby", "url-error");
+  urlError.textContent = `× ${message}`;
+  urlError.hidden = false;
+}
+
+function clearUrlError() {
+  repoUrlInput.removeAttribute("aria-invalid");
+  repoUrlInput.removeAttribute("aria-describedby");
+  urlError.hidden = true;
 }
 
 // Hide all screen divs
@@ -161,22 +180,41 @@ if (demoLink) {
     e.preventDefault();
     repoUrlInput.value = "github.com/pallets/flask";
     repoUrlInput.focus();
+    checkBtn.click();
   });
 }
+
+repoForm.addEventListener("submit", (event) => { event.preventDefault(); checkBtn.click(); });
 
 repoUrlInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") checkBtn.click();
 });
-repoUrlInput.addEventListener("input", () => checkBtn.classList.remove("btn-secondary"));
+repoUrlInput.addEventListener("input", () => {
+  checkBtn.classList.remove("btn-secondary");
+  clearUrlError();
+  clearElement(checkScreen);
+  checkScreen.style.display = "none";
+  mappingStrip.hidden = false;
+});
 
 if (checkBtn) {
   checkBtn.addEventListener("click", async () => {
-    const url = normalizeRepoUrl(repoUrlInput.value);
-    if (!url) return;
+    const rawUrl = repoUrlInput.value.trim();
+    if (!rawUrl) { showUrlError("Paste a GitHub repo URL to begin."); return; }
+    const url = normalizeRepoUrl(rawUrl);
+    if (!url) {
+      showUrlError(rawUrl.split("/")[0].includes(".") ? "That isn't a GitHub URL. Use github.com/owner/repo." : "Use the format github.com/owner/repo.");
+      return;
+    }
+    clearUrlError();
     repoUrlInput.value = url;
     state.currentUrl = url;
 
     clearElement(checkScreen);
+    mappingStrip.hidden = true;
+    repoUrlInput.readOnly = true;
+    checkBtn.disabled = true;
+    checkBtn.setAttribute("aria-busy", "true");
     checkScreen.style.display = "block";
     const progress = addElement(checkScreen, "div", null, "check-progress");
     addElement(progress, "p", "Checking repository", "status-line");
@@ -206,6 +244,10 @@ if (checkBtn) {
       console.error("Fetch error:", err);
       clearElement(checkScreen);
       renderErrorCard("Cannot reach server", "The API request failed before a response was received.");
+    } finally {
+      repoUrlInput.readOnly = false;
+      checkBtn.disabled = false;
+      checkBtn.removeAttribute("aria-busy");
     }
   });
 }
@@ -232,6 +274,9 @@ function renderCheckCard(data) {
     if (data.suggestion) {
       addElement(box, "p", data.suggestion, "suggestion");
     }
+    const retry = addElement(box, "button", "Edit URL", "primary-action");
+    retry.addEventListener("click", () => repoUrlInput.focus());
+    retry.focus();
     return;
   }
 
@@ -259,6 +304,7 @@ function renderCheckCard(data) {
 
   const startBtn = addElement(card, "button", "Start Game", "primary-action");
   startBtn.addEventListener("click", () => startGame(state.currentUrl));
+  startBtn.focus();
 }
 
 async function startGame(url) {
@@ -750,7 +796,7 @@ function initThreeBackground() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // Slow rotating wireframe grid (neon green accents)
-    const gridHelper = new THREE.GridHelper(80, 40, 0x00ff00, 0x003300);
+    const gridHelper = new THREE.GridHelper(80, 40, 0x006b1d, 0x001608);
     gridHelper.position.y = -5;
     scene.add(gridHelper);
 
@@ -773,7 +819,7 @@ function initThreeBackground() {
       size: 0.5,
       color: 0x00ff00,
       transparent: true,
-      opacity: 0.6
+      opacity: 0.2
     });
 
     const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);

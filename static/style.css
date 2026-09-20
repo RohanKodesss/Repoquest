@@ -11,14 +11,16 @@
   padding: 0;
 }
 
+:root { --bg: oklch(.14 .012 150); --surface: oklch(.19 .02 150); --field: oklch(.165 .016 150); --text: oklch(.95 .035 145); --muted: oklch(.78 .05 145); --accent: oklch(.87 .24 143); --accent-text: oklch(.16 .03 150); --warn: oklch(.86 .15 85); --danger: oklch(.74 .17 25); }
+
 /* Base */
 body {
-  background: #0a0a0a;
-  color: #00ff00;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 16px;
-  line-height: 1.7;
-  padding: 40px 20px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "JetBrains Mono", "IBM Plex Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(16px, .55vw + 12px, 20px);
+  line-height: 1.6;
+  padding: clamp(2rem, 12vh, 7rem) 20px 40px;
   overflow-x: hidden;
 }
 
@@ -34,7 +36,7 @@ body {
 }
 
 #app {
-  max-width: 720px;
+  max-width: 46rem;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -42,22 +44,20 @@ body {
 
 /* Logo Header */
 .logo-header {
-  margin-bottom: 24px;
-}
-
-.brand-logo {
-  max-width: 100%;
-  width: 100%;
-  height: auto;
-  display: block;
+  margin-bottom: 1.5rem;
 }
 
 /* Title */
 h1 {
-  font-size: 2.4em;
-  letter-spacing: 2px;
-  margin-bottom: 6px;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  letter-spacing: -.01em;
+  line-height: 1;
 }
+.brand-lockup { display:flex; gap:.8rem; align-items:center; }
+.brand-mark { width:3.25rem; height:3.25rem; fill:none; stroke:var(--accent); stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.brand-kicker { color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-size:clamp(13px,1.2vw,16px); margin:.7rem 0; }
+.brand-description { max-width:58ch; color:var(--text); font-size:1.125rem; text-wrap:pretty; }
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
 
 .tagline {
   color: #888;
@@ -66,6 +66,7 @@ h1 {
 
 /* ---- Start screen ---- */
 .input-row {
+  position:relative;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -73,16 +74,20 @@ h1 {
 }
 
 input[type="text"] {
-  background: #111;
-  border: 1px solid #00ff00;
-  color: #00ff00;
-  padding: 10px 14px;
+  background: var(--field);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  height:3.5rem;
+  padding: 10px 14px 10px 2.25rem;
   font-family: inherit;
-  font-size: 1em;
+  font-size: 18px;
   flex: 1 1 340px;
   min-width: 0;
   outline: none;
 }
+input::placeholder { color:var(--muted); opacity:1; }
+.input-prompt { position:absolute; left:.85rem; top:.75rem; color:var(--accent); font-weight:700; pointer-events:none; }
+.inline-error { color:var(--danger); margin-top:.45rem; font-size:.9rem; }
 
 input[type="text"]:focus {
   border-color: #00ffaa;
@@ -166,6 +171,9 @@ button.btn-danger:hover {
 .meta { color: #c3cec3; font-size: 0.9em; }
 .primary-action { box-shadow: 0 0 0 1px #00ff00; }
 .demo-chip { display: inline-block; border: 1px solid #9fffd0; padding: 5px 10px; border-radius: 999px; }
+.demo-chip { background:var(--surface); color:var(--text); margin-top:.7rem; }
+.mapping-strip { margin-top:2rem; color:var(--muted); font-size:.88rem; display:flex; flex-wrap:wrap; gap:.7rem 1.25rem; }
+.mapping-strip span { color:var(--accent); }.mapping-strip p { flex-basis:100%; color:var(--text); max-width:65ch; }
 
 /* ---- Check card ---- */
 .check-card {
@@ -342,6 +350,7 @@ button.btn-danger:hover {
   .stat-grid { gap: 6px; }
   .check-card, .end-card, .fight-card { padding: 16px; }
 }
+@media (max-width: 34rem) { .input-row { display:grid; grid-template-columns:1fr; } .input-row button { width:100%; } }
 
 /* Keyboard focus for all interactive elements */
 a:focus-visible {
